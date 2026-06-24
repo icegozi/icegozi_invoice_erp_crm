@@ -1,0 +1,62 @@
+# All configurable values are read from the single root ".env" file
+# (Docker Compose loads it automatically). Defaults below let the stack run
+# even when no .env exists — so `docker compose up -d --build` just works.
+services:
+  mongo:
+    image: mongo:7
+    container_name: invoice-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: invoice-backend
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      # Docker always uses the bundled MongoDB service (ignores DATABASE in .env)
+      DATABASE: "mongodb://mongo:27017/invoice"
+      PORT: "8888"
+      NODE_ENV: "production"
+      JWT_SECRET: "${JWT_SECRET:-change_this_jwt_secret_in_production}"
+      # Public URLs (links in emails, file URLs)
+      FRONTEND_URL: "${FRONTEND_URL:-http://localhost:3000}"
+      PUBLIC_SERVER_FILE: "${VITE_BACKEND_SERVER:-http://localhost:8888/}"
+      # Email (Resend) — leave RESEND_API empty to disable email sending
+      RESEND_API: "${RESEND_API:-}"
+      OPENING_EMAIL: "${OPENING_EMAIL:-onboarding@resend.dev}"
+      # AI (optional)
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+    ports:
+      - "8888:8888"
+    volumes:
+      - uploads-data:/app/src/public/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Baked into the build (browser talks to backend directly)
+        VITE_BACKEND_SERVER: "${VITE_BACKEND_SERVER:-http://localhost:8888/}"
+        VITE_FILE_BASE_URL: "${VITE_FILE_BASE_URL:-http://localhost:8888/}"
+    container_name: invoice-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+volumes:
+  mongo-data:
+  uploads-data:
