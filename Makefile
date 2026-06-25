@@ -38,9 +38,17 @@ help: ## List all command name
 # =====================================================================
 #  Lifecycle
 # =====================================================================
+start: ## Start containers
+	@$(COMPOSE) up -d
+	@echo "Containers started"
+
+stop: ## Stop containers
+	@$(COMPOSE) stop
+	@echo "Containers stopped"
+
 up: ## Start all containers (build if images don't exist)
 	@$(MAKE) _check-stale
-	uid=`id -u` gid=`id -g` $(COMPOSE) up --build --detach --remove-orphans
+	@uid=`id -u` gid=`id -g` $(COMPOSE) up --build --detach --remove-orphans
 	@branch_or_tag=$$(git symbolic-ref -q --short HEAD || git describe --tags --exact-match 2>/dev/null || echo "unknown");\
 	sha_id=$$(git rev-parse --short HEAD 2>/dev/null || echo "unknown");\
 	echo "$$branch_or_tag - $$sha_id" > VERSION 2>/dev/null || true
@@ -48,9 +56,9 @@ up: ## Start all containers (build if images don't exist)
 	@echo "VERSION file updated"
 
 up-latest: ## Rebuild images from scratch and start (no cache)
-	uid=`id -u` gid=`id -g` $(COMPOSE) build --no-cache
+	@uid=`id -u` gid=`id -g` $(COMPOSE) build --no-cache
 	@$(MAKE) _check-stale
-	uid=`id -u` gid=`id -g` $(COMPOSE) up --detach --remove-orphans
+	@uid=`id -u` gid=`id -g` $(COMPOSE) up --detach --remove-orphans
 	@echo "Containers started with a fresh build"
 
 PROJECT := $(notdir $(CURDIR))
@@ -88,7 +96,7 @@ fix-stale: ## Force-remove containers squatting our names from another compose p
 	if [ "$$removed" = "0" ]; then echo "No stale containers from other projects — nothing to do."; fi
 
 down: ## Stop and remove containers
-	$(COMPOSE) down
+	@$(COMPOSE) down
 	@echo "Containers stopped"
 
 restart: ## Restart all containers
@@ -96,19 +104,19 @@ restart: ## Restart all containers
 	@$(MAKE) up
 
 destroy: ## Stop containers and remove volumes (deletes the database)
-	$(COMPOSE) down -v --remove-orphans
+	@$(COMPOSE) down -v --remove-orphans
 	@echo "All containers and volumes removed (database wiped)"
 
 build: ## Build Docker images
-	uid=`id -u` gid=`id -g` $(COMPOSE) build
+	@uid=`id -u` gid=`id -g` $(COMPOSE) build
 	@echo "Images built"
 
 build-prod: ## Build production images without cache
-	$(COMPOSE) -f docker-compose.yml build --no-cache
+	@$(COMPOSE) -f docker-compose.yml build --no-cache
 	@echo "Production images built"
 
 config: ## Show merged docker-compose configuration
-	$(COMPOSE) config
+	@$(COMPOSE) config
 
 # =====================================================================
 #  Status & Logs
@@ -121,52 +129,52 @@ health: ## Check health/status of invoice services
 	@docker ps --format "table {{.Names}}\t{{.Status}}" --filter "name=invoice"
 
 logs: ## Tail logs from all containers
-	$(COMPOSE) logs -f
+	@$(COMPOSE) logs -f
 
 logs-backend: ## Tail backend (Node/Express) logs
-	docker logs -f $(BACKEND)
+	@docker logs -f $(BACKEND)
 
 logs-frontend: ## Tail frontend (nginx) logs
-	docker logs -f $(FRONTEND)
+	@docker logs -f $(FRONTEND)
 
 logs-db: ## Tail MongoDB logs
-	docker logs -f $(DB)
+	@docker logs -f $(DB)
 
 # =====================================================================
 #  Shell access
 # =====================================================================
 sh-backend: ## Open a shell in the backend container
-	docker exec -it $(BACKEND) sh
+	@docker exec -it $(BACKEND) sh
 
 sh-backend-root: ## Open a shell in the backend container as root
-	docker exec -it --user 0 $(BACKEND) sh
+	@docker exec -it --user 0 $(BACKEND) sh
 
 sh-frontend: ## Open a shell in the frontend (nginx) container
-	docker exec -it $(FRONTEND) sh
+	@docker exec -it $(FRONTEND) sh
 
 sh-db: ## Open a shell in the MongoDB container
-	docker exec -it $(DB) sh
+	@docker exec -it $(DB) sh
 
 mongo: ## Open a mongosh shell on the invoice database
-	docker exec -it $(DB) mongosh $(MONGO_DB)
+	@docker exec -it $(DB) mongosh $(MONGO_DB)
 
 # =====================================================================
 #  Backend / Node tasks (run inside the live backend container)
 # =====================================================================
 backend-install: ## Reinstall backend npm dependencies in the container
-	docker exec -t --user 0 $(BACKEND) npm install
+	@docker exec -t --user 0 $(BACKEND) npm install
 	@echo "Backend dependencies installed"
 
 setup: ## Seed initial admin + default settings (default login admin123)
-	docker exec -t $(BACKEND) npm run setup
+	@docker exec -t $(BACKEND) npm run setup
 	@echo "Database seeded"
 
 reset: ## Wipe all collections (keeps the database, clears data)
-	docker exec -t $(BACKEND) npm run reset
+	@docker exec -t $(BACKEND) npm run reset
 	@echo "Collections reset"
 
 upgrade: ## Run the backend upgrade/migration script
-	docker exec -t $(BACKEND) npm run upgrade
+	@docker exec -t $(BACKEND) npm run upgrade
 	@echo "Upgrade script finished"
 
 # Generate a new Mongoose model on the HOST source tree (writes to ./backend).
@@ -180,7 +188,7 @@ make-model: ## Generate a new model (usage: make make-model MODEL=Product FIELDS
 		echo "Usage: make make-model MODEL=Product FIELDS=\"name:string:required price:number\" [CONTROLLER=1]"; \
 		exit 1; \
 	fi
-	docker run --rm --user $$(id -u):$$(id -g) -v "$(PWD)/backend:/app" -w /app $(NODE_IMAGE) \
+	@docker run --rm --user $$(id -u):$$(id -g) -v "$(PWD)/backend:/app" -w /app $(NODE_IMAGE) \
 		node src/cli/makeModel.js $(MODEL) $(FIELDS) $(if $(CONTROLLER),--controller,)
 	@echo "Run 'make restart' (or rebuild) so the backend picks up the new model"
 
@@ -188,19 +196,19 @@ make-model: ## Generate a new model (usage: make make-model MODEL=Product FIELDS
 #  Local development (host, hot-reload — needs Node + MongoDB)
 # =====================================================================
 install: ## Install backend + frontend npm dependencies on the host
-	cd backend && npm install
-	cd frontend && npm install
+	@cd backend && npm install
+	@cd frontend && npm install
 	@echo "Dependencies installed (backend + frontend)"
 
 mongo-up: ## Start only the MongoDB container (DB for host dev servers)
-	$(COMPOSE) up --detach mongo
+	@$(COMPOSE) up --detach mongo
 	@echo "MongoDB running on :27017 (db 'invoice')"
 
 dev: ## Run backend + frontend dev servers with hot reload (Ctrl+C stops both)
 	@if [ ! -x backend/node_modules/.bin/nodemon ] || [ ! -x frontend/node_modules/.bin/vite ]; then \
 		echo "❌ Dependencies missing — run 'make install' first."; exit 1; fi
 	-@$(COMPOSE) stop backend frontend >/dev/null 2>&1 || true
-	$(COMPOSE) up --detach mongo
+	@$(COMPOSE) up --detach mongo
 	@echo "🚀 Backend :8888 (nodemon) + Frontend :3000 (vite). Press Ctrl+C to stop both."
 	@trap 'kill 0' INT TERM EXIT; \
 		(cd backend && npm run dev) & \
@@ -208,13 +216,13 @@ dev: ## Run backend + frontend dev servers with hot reload (Ctrl+C stops both)
 		wait
 
 dev-backend: ## Run only the backend dev server (nodemon, :8888)
-	cd backend && npm run dev
+	@cd backend && npm run dev
 
 dev-frontend: ## Run only the frontend dev server (vite, :3000)
-	cd frontend && npm run dev
+	@cd frontend && npm run dev
 
 build-frontend: ## Build the frontend for production (npm run build → frontend/dist)
-	cd frontend && npm run build
+	@cd frontend && npm run build
 	@echo "Frontend built → frontend/dist"
 
 stop-dev: ## Stop host dev servers + the mongo-up container
@@ -222,22 +230,22 @@ stop-dev: ## Stop host dev servers + the mongo-up container
 	# The [x] bracket stops pkill from matching its own command line.
 	-@pkill -f "$(CURDIR)/backend/node_modules.*[n]odemon" 2>/dev/null || true
 	-@pkill -f "$(CURDIR)/frontend/node_modules.*[v]ite" 2>/dev/null || true
-	$(COMPOSE) stop mongo
+	@$(COMPOSE) stop mongo
 	@echo "Dev servers and mongo stopped"
 
 # =====================================================================
 #  Frontend tasks
 # =====================================================================
 lint: ## Run frontend ESLint (in a throwaway node container)
-	docker run --rm --user $$(id -u):$$(id -g) -v "$(PWD)/frontend:/app" -w /app $(NODE_IMAGE) \
+	@docker run --rm --user $$(id -u):$$(id -g) -v "$(PWD)/frontend:/app" -w /app $(NODE_IMAGE) \
 		sh -c "npm install --no-audit --no-fund && npm run lint"
 
 rebuild-frontend: ## Rebuild and restart only the frontend container
-	uid=`id -u` gid=`id -g` $(COMPOSE) up --build --detach --no-deps frontend
+	@uid=`id -u` gid=`id -g` $(COMPOSE) up --build --detach --no-deps frontend
 	@echo "Frontend rebuilt"
 
 rebuild-backend: ## Rebuild and restart only the backend container
-	uid=`id -u` gid=`id -g` $(COMPOSE) up --build --detach --no-deps backend
+	@uid=`id -u` gid=`id -g` $(COMPOSE) up --build --detach --no-deps backend
 	@echo "Backend rebuilt"
 
 # =====================================================================
@@ -254,7 +262,7 @@ db-restore: ## Restore from an archive (usage: make db-restore FILE=backups/xxx.
 		echo "Usage: make db-restore FILE=backups/<timestamp>.archive"; \
 		exit 1; \
 	fi
-	docker exec -i $(DB) sh -c "mongorestore --drop --archive" < $(FILE)
+	@docker exec -i $(DB) sh -c "mongorestore --drop --archive" < $(FILE)
 	@echo "Database restored from $(FILE)"
 
 # =====================================================================
