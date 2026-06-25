@@ -39,6 +39,7 @@ help: ## List all command name
 #  Lifecycle
 # =====================================================================
 up: ## Start all containers (build if images don't exist)
+	@$(MAKE) _check-stale
 	uid=`id -u` gid=`id -g` $(COMPOSE) up --build --detach --remove-orphans
 	@branch_or_tag=$$(git symbolic-ref -q --short HEAD || git describe --tags --exact-match 2>/dev/null || echo "unknown");\
 	sha_id=$$(git rev-parse --short HEAD 2>/dev/null || echo "unknown");\
@@ -48,8 +49,43 @@ up: ## Start all containers (build if images don't exist)
 
 up-latest: ## Rebuild images from scratch and start (no cache)
 	uid=`id -u` gid=`id -g` $(COMPOSE) build --no-cache
+	@$(MAKE) _check-stale
 	uid=`id -u` gid=`id -g` $(COMPOSE) up --detach --remove-orphans
 	@echo "Containers started with a fresh build"
+
+PROJECT := $(notdir $(CURDIR))
+_check-stale:
+	@clash=0; \
+	for c in $(DB) $(BACKEND) $(FRONTEND); do \
+		owner=$$(docker inspect -f '{{ index .Config.Labels "com.docker.compose.project" }}' $$c 2>/dev/null) || continue; \
+		if [ -n "$$owner" ] && [ "$$owner" != "$(PROJECT)" ]; then \
+			clash=1; \
+			id=$$(docker inspect -f '{{ slice .Id 0 12 }}' $$c 2>/dev/null); \
+			status=$$(docker inspect -f '{{ .State.Status }}' $$c 2>/dev/null); \
+			printf "$(TITLE_COLOR)⚠  Name '%s' is taken by another compose project$(NO_COLOR)\n" "$$c"; \
+			printf "     container id : %s\n" "$$id"; \
+			printf "     project      : %s (current: %s)\n" "$$owner" "$(PROJECT)"; \
+			printf "     status       : %s\n" "$$status"; \
+			printf "     free it with : $(COMMAND_COLOR)docker rm -f %s$(NO_COLOR)\n" "$$c"; \
+		fi; \
+	done; \
+	if [ "$$clash" = "1" ]; then \
+		printf "$(TITLE_COLOR)Fix all of the above at once:$(NO_COLOR) $(COMMAND_COLOR)make fix-stale$(NO_COLOR)\n"; \
+		printf "$(TITLE_COLOR)Then re-run this target.$(NO_COLOR)\n"; \
+		exit 1; \
+	fi
+
+fix-stale: ## Force-remove containers squatting our names from another compose project
+	@removed=0; \
+	for c in $(DB) $(BACKEND) $(FRONTEND); do \
+		owner=$$(docker inspect -f '{{ index .Config.Labels "com.docker.compose.project" }}' $$c 2>/dev/null) || continue; \
+		if [ -n "$$owner" ] && [ "$$owner" != "$(PROJECT)" ]; then \
+			printf "Removing %s (owned by project '%s')... " "$$c" "$$owner"; \
+			docker rm -f $$c >/dev/null 2>&1 && echo "done" || echo "failed"; \
+			removed=1; \
+		fi; \
+	done; \
+	if [ "$$removed" = "0" ]; then echo "No stale containers from other projects — nothing to do."; fi
 
 down: ## Stop and remove containers
 	$(COMPOSE) down
@@ -230,7 +266,7 @@ clean: ## Remove dangling Docker images and build cache
 	@docker builder prune -f
 	@echo "Clean completed"
 
-.PHONY: help up up-latest down restart destroy build build-prod config \
+.PHONY: help up up-latest _check-stale fix-stale down restart destroy build build-prod config \
 	status health logs logs-backend logs-frontend logs-db \
 	sh-backend sh-backend-root sh-frontend sh-db mongo \
 	backend-install setup reset upgrade make-model \
