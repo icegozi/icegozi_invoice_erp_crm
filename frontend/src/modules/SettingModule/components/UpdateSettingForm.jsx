@@ -17,16 +17,20 @@ export default function UpdateSettingForm({ config, children, withUpload, upload
   const [form] = Form.useForm();
 
   const onSubmit = (fieldsValue) => {
-    console.log('🚀 ~ onSubmit ~ fieldsValue:', fieldsValue);
     if (withUpload) {
-      if (fieldsValue.file) {
-        fieldsValue.file = fieldsValue.file[0].originFileObj;
+      const fileList = fieldsValue.file;
+      if (fileList && fileList.length > 0) {
+        const fileItem = fileList[0];
+        // When `beforeUpload` returns false, antd keeps the raw File on
+        // `originFileObj`; some flows hand back the File itself — support both.
+        const fileToUpload = fileItem.originFileObj || fileItem;
+        fieldsValue.file = fileToUpload;
       } else {
         notification.error({
           message: translate('Please select a file to upload.'),
         });
         return;
-      } 
+      }
       dispatch(
         settingsAction.upload({ entity, settingKey: uploadSettingKey, jsonData: fieldsValue })
       );

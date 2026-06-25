@@ -1,5 +1,7 @@
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+const crypto = require('crypto');
 const { slugify } = require('transliteration');
 
 const fileFilter = require('./utils/LocalfileFilter');
@@ -12,13 +14,20 @@ const singleStorageUpload = ({
 }) => {
   var diskStorage = multer.diskStorage({
     destination: function (req, file, cb) {
-      cb(null, `src/public/uploads/${entity}`);
+      const uploadPath = `src/public/uploads/${entity}`;
+      try {
+        fs.mkdirSync(uploadPath, { recursive: true });
+        cb(null, uploadPath);
+      } catch (error) {
+        cb(error);
+      }
     },
     filename: function (req, file, cb) {
       try {
         // fetching the file extension of the uploaded file
         let fileExtension = path.extname(file.originalname);
-        let uniqueFileID = Math.random().toString(36).slice(2, 7); // generates unique ID of length 5
+        // 8 hex chars from a CSPRNG — far lower collision chance than the old 5-char Math.random()
+        let uniqueFileID = crypto.randomBytes(4).toString('hex');
 
         let originalname = '';
         if (req.body.seotitle) {
