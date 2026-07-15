@@ -1,12 +1,9 @@
 const Joi = require('joi');
-
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 const checkAndCorrectURL = require('./checkAndCorrectURL');
 const sendMail = require('./sendMail');
-const shortid = require('shortid');
-const { loadSettings } = require('@/middlewares/settings');
-
 const { useAppSettings } = require('@/settings');
 
 const forgetPassword = async (req, res, { userModel }) => {
@@ -33,9 +30,6 @@ const forgetPassword = async (req, res, { userModel }) => {
   }
 
   const user = await User.findOne({ email: email, removed: false });
-  const databasePassword = await UserPassword.findOne({ user: user._id, removed: false });
-
-  // console.log(user);
   if (!user)
     return res.status(404).json({
       success: false,
@@ -43,10 +37,22 @@ const forgetPassword = async (req, res, { userModel }) => {
       message: 'No account with this email has been registered.',
     });
 
-  const resetToken = shortid.generate();
+  const databasePassword = await UserPassword.findOne({ user: user._id, removed: false });
+  if (!databasePassword)
+    return res.status(404).json({
+      success: false,
+      result: null,
+      message: 'No account with this email has been registered.',
+    });
+
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
   await UserPassword.findOneAndUpdate(
     { user: user._id },
-    { resetToken },
+    {
+      resetToken: resetTokenHash,
+      resetTokenExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
+    },
     {
       new: true,
     }

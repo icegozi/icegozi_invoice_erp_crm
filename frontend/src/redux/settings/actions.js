@@ -57,15 +57,18 @@ export const settingsAction = {
             type: actionTypes.REQUEST_SUCCESS,
             payload,
           });
+          return true;
         } else {
           dispatch({
             type: actionTypes.REQUEST_FAILED,
           });
+          return false;
         }
       } else {
         dispatch({
           type: actionTypes.REQUEST_FAILED,
         });
+        return false;
       }
     },
   updateMany:
@@ -97,15 +100,18 @@ export const settingsAction = {
             type: actionTypes.REQUEST_SUCCESS,
             payload,
           });
+          return true;
         } else {
           dispatch({
             type: actionTypes.REQUEST_FAILED,
           });
+          return false;
         }
       } else {
         dispatch({
           type: actionTypes.REQUEST_FAILED,
         });
+        return false;
       }
     },
   list:

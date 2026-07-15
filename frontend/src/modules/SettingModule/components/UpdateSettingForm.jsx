@@ -9,14 +9,20 @@ import Loading from '@/components/Loading';
 import useLanguage from '@/locale/useLanguage';
 import { notification } from 'antd';
 
-export default function UpdateSettingForm({ config, children, withUpload, uploadSettingKey }) {
+export default function UpdateSettingForm({
+  config,
+  children,
+  withUpload,
+  uploadSettingKey,
+  onSubmitSuccess,
+}) {
   let { entity, settingsCategory } = config;
   const dispatch = useDispatch();
   const { result, isLoading } = useSelector(selectSettings);
   const translate = useLanguage();
   const [form] = Form.useForm();
 
-  const onSubmit = (fieldsValue) => {
+  const onSubmit = async (fieldsValue) => {
     if (withUpload) {
       const fileList = fieldsValue.file;
       if (fileList && fileList.length > 0) {
@@ -41,7 +47,8 @@ export default function UpdateSettingForm({ config, children, withUpload, upload
         settings.push({ settingKey: key, settingValue: value });
       }
 
-      dispatch(settingsAction.updateMany({ entity, jsonData: { settings } }));
+      const saved = await dispatch(settingsAction.updateMany({ entity, jsonData: { settings } }));
+      if (saved) onSubmitSuccess?.(fieldsValue);
     }
   };
 

@@ -9,6 +9,7 @@ export default function UpdateSettingModule({
   children,
   withUpload = false,
   uploadSettingKey = null,
+  onSubmitSuccess,
 }) {
   return (
     <>
@@ -30,6 +31,7 @@ export default function UpdateSettingModule({
         config={config}
         withUpload={withUpload}
         uploadSettingKey={uploadSettingKey}
+        onSubmitSuccess={onSubmitSuccess}
       >
         {children}
       </UpdateSettingForm>

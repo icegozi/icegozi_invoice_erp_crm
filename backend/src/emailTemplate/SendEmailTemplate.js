@@ -1,4 +1,12 @@
+const escapeHtml = (value = '') =>
+  String(value).replace(/[&<>"']/g, (character) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]
+  );
+
 exports.SendInvoice = ({ title = 'Invoice from Invoice', name = '', time = new Date() }) => {
+  title = escapeHtml(title);
+  name = escapeHtml(name);
+  time = escapeHtml(time);
   return `
     <div>
 
@@ -20,6 +28,9 @@ exports.SendInvoice = ({ title = 'Invoice from Invoice', name = '', time = new D
 };
 
 exports.SendQuote = ({ title = 'Quote from Invoice', name = '', time = new Date() }) => {
+  title = escapeHtml(title);
+  name = escapeHtml(name);
+  time = escapeHtml(time);
   return `
     <div>
 
@@ -41,6 +52,9 @@ exports.SendQuote = ({ title = 'Quote from Invoice', name = '', time = new Date(
 };
 
 exports.SendOffer = ({ title = 'Offer from Invoice', name = '', time = new Date() }) => {
+  title = escapeHtml(title);
+  name = escapeHtml(name);
+  time = escapeHtml(time);
   return `
     <div>
 
@@ -66,6 +80,9 @@ exports.SendPaymentReceipt = ({
   name = '',
   time = new Date(),
 }) => {
+  title = escapeHtml(title);
+  name = escapeHtml(name);
+  time = escapeHtml(time);
   return `
     <div>
 

@@ -1,11 +1,9 @@
 import { Input, Form, Select } from 'antd';
 
 import useLanguage from '@/locale/useLanguage';
-import { useLocale } from '@/locale/Localization';
 
 export default function GeneralSettingForm() {
   const translate = useLanguage();
-  const { setLanguage } = useLocale();
 
   return (
     <div>
@@ -23,7 +21,6 @@ export default function GeneralSettingForm() {
             { value: 'vi_vn', label: 'Tiếng Việt' },
             { value: 'en_us', label: 'English' },
           ]}
-          onChange={setLanguage}
         />
       </Form.Item>
       <Form.Item

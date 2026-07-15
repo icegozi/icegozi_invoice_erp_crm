@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { randomUUID } = require('crypto');
 const mongoose = require('mongoose');
 const pdfController = require('@/controllers/pdfController');
 const { loadSettings } = require('@/middlewares/settings');
@@ -61,7 +62,7 @@ const sendDocumentMail = ({ modelName, template = 'SendInvoice', label }) => {
     const companyName = settings['company_name'] || 'InvoiceCRM';
     const fromEmail = process.env.MAIL_FROM || settings['invoice_app_email'] || 'noreply@invoicecrm.test';
 
-    const fileName = `${modelName.toLowerCase()}-${result._id}.pdf`;
+    const fileName = `${modelName.toLowerCase()}-${result._id}-${randomUUID()}.pdf`;
     const targetLocation = path.join(
       'src',
       'public',
@@ -71,24 +72,20 @@ const sendDocumentMail = ({ modelName, template = 'SendInvoice', label }) => {
     );
     fs.mkdirSync(path.dirname(targetLocation), { recursive: true });
 
+    let pdfGenerated = false;
+    let mailSent = false;
+    let documentNumber;
     try {
       await renderPdf(modelName, result, targetLocation);
-    } catch (err) {
-      return res.status(500).json({
-        success: false,
-        result: null,
-        message: `Không tạo được PDF: ${err.message || err}`,
-      });
-    }
+      pdfGenerated = true;
+      const pdfContent = await fs.promises.readFile(targetLocation);
 
-    // 4) Send to Mailpit with the PDF attached. Mailpit captures messages locally
-    // and never relays them to real recipients.
-    const buildTemplate = emailTemplates[template] || emailTemplates.SendInvoice;
-    const documentNumber = result.year ? `${result.number}/${result.year}` : result.number;
-    const subject = `${docLabel} #${documentNumber} — ${companyName}`;
-    const pdfContent = fs.readFileSync(targetLocation);
+      // 4) Send to Mailpit with the PDF attached. Mailpit captures messages locally
+      // and never relays them to real recipients.
+      const buildTemplate = emailTemplates[template] || emailTemplates.SendInvoice;
+      documentNumber = result.year ? `${result.number}/${result.year}` : result.number;
+      const subject = `${docLabel} #${documentNumber} — ${companyName}`;
 
-    try {
       await sendMail({
         from: fromEmail,
         to: toEmail,
@@ -96,24 +93,36 @@ const sendDocumentMail = ({ modelName, template = 'SendInvoice', label }) => {
         html: buildTemplate({ title: subject, name: result.client.name }),
         attachments: [{ filename: fileName, content: pdfContent }],
       });
+      mailSent = true;
+
+      // 5) Mark invoices and quotes as "sent". Payment receipts do not have a status field.
+      if (modelName !== 'Payment') {
+        await Model.updateOne({ _id: result._id }, { $set: { status: 'sent' } });
+      }
+
+      return res.status(200).json({
+        success: true,
+        result,
+        message: `Email ${docLabel} #${documentNumber} đã được lưu trong Mailpit cho ${toEmail}`,
+      });
     } catch (error) {
-      return res.status(503).json({
+      if (mailSent) {
+        return res.status(200).json({
+          success: true,
+          result,
+          message: `Email ${docLabel} #${documentNumber} đã được lưu trong Mailpit, nhưng không cập nhật được trạng thái.`,
+        });
+      }
+      return res.status(pdfGenerated ? 503 : 500).json({
         success: false,
         result: null,
-        message: `Không thể gửi email tới Mailpit: ${error.message || error.name || 'unknown error'}`,
+        message: pdfGenerated
+          ? `Không thể gửi email: ${error.message || error.name || 'unknown error'}`
+          : `Không tạo được PDF: ${error.message || error}`,
       });
+    } finally {
+      await fs.promises.unlink(targetLocation).catch(() => {});
     }
-
-    // 5) Mark invoices and quotes as "sent". Payment receipts do not have a status field.
-    if (modelName !== 'Payment') {
-      await Model.updateOne({ _id: result._id }, { $set: { status: 'sent' } });
-    }
-
-    return res.status(200).json({
-      success: true,
-      result,
-      message: `Email ${docLabel} #${documentNumber} đã được lưu trong Mailpit cho ${toEmail}`,
-    });
   };
 };
 
