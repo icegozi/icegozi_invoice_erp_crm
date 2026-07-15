@@ -13,11 +13,11 @@ Open-source **ERP / CRM** quản lý Hóa đơn (Invoice), Báo giá (Quote), Th
 
 ## Công nghệ
 
-| Tầng | Stack |
-|------|-------|
-| Backend | Node.js 20 · Express · MongoDB (Mongoose) |
+| Tầng     | Stack                                        |
+| -------- | -------------------------------------------- |
+| Backend  | Node.js 20 · Express · MongoDB (Mongoose)    |
 | Frontend | React 18 · Vite · Ant Design · Redux Toolkit |
-| Hạ tầng | Docker · Docker Compose · Nginx |
+| Hạ tầng  | Docker · Docker Compose · Nginx              |
 
 > Backend tự sinh REST API cho mỗi model trong `backend/src/models/appModels/` — xem chi tiết kiến trúc trong [CLAUDE.md](CLAUDE.md).
 
@@ -28,6 +28,7 @@ Open-source **ERP / CRM** quản lý Hóa đơn (Invoice), Báo giá (Quote), Th
 Cách nhanh nhất — chạy toàn bộ (MongoDB + Backend + Frontend) trong Docker, không cần cài Node hay MongoDB trên máy.
 
 ### Yêu cầu
+
 - Docker Engine 20+ và Docker Compose v2
 
 ### Chạy
@@ -38,13 +39,13 @@ docker compose up -d --build
 
 Lần đầu chạy, backend tự chờ MongoDB sẵn sàng rồi **tự seed** tài khoản admin và cấu hình mặc định.
 
-| Service | URL | Ghi chú |
-|---------|-----|---------|
-| Frontend | http://localhost:3000 | Giao diện ứng dụng |
-| Backend API | http://localhost:8888 | REST API |
-| MongoDB | mongodb://localhost:27017 | Database `invoice` |
+| Service     | URL                       | Ghi chú            |
+| ----------- | ------------------------- | ------------------ |
+| Frontend    | http://localhost:3000     | Giao diện ứng dụng |
+| Backend API | http://localhost:8000     | REST API           |
+| MongoDB     | mongodb://localhost:27017 | Database `invoice` |
 
-**Đăng nhập mặc định:** `admin@admin.com` / `admin123` *(đổi mật khẩu ngay sau khi đăng nhập)*
+**Đăng nhập mặc định:** `admin@admin.com` / `admin123` _(đổi mật khẩu ngay sau khi đăng nhập)_
 
 ### Lệnh thường dùng
 
@@ -67,8 +68,8 @@ Các biến chính trong `.env`:
 ```env
 JWT_SECRET=chuoi_bi_mat_dai_ngau_nhien
 FRONTEND_URL=http://localhost:3000        # URL public của app
-VITE_BACKEND_SERVER=http://localhost:8888/  # URL backend (frontend gọi tới)
-VITE_FILE_BASE_URL=http://localhost:8888/
+VITE_BACKEND_SERVER=http://localhost:8000/  # URL backend (frontend gọi tới)
+VITE_FILE_BASE_URL=http://localhost:8000/
 RESEND_API=                               # API key Resend để gửi email (trống = tắt email)
 OPENING_EMAIL=onboarding@resend.dev       # email gửi đi (verify trên Resend)
 OPENAI_API_KEY=                           # (tùy chọn) tích hợp AI
@@ -91,7 +92,7 @@ cd backend
 cp .env .env.local              # rồi sửa DATABASE="<mongodb-uri>" trong .env.local
 npm install
 npm run setup                   # seed admin + cấu hình mặc định (chạy 1 lần)
-npm run dev                     # backend chạy ở cổng 8888
+npm run dev                     # backend chạy ở cổng 8000
 
 # 2. Frontend (terminal khác)
 cd frontend
@@ -122,7 +123,7 @@ Sau khi đăng nhập (`admin@admin.com` / `admin123`), thanh menu bên trái g�
 
 Vào **Khách hàng → Add New Customer**, nhập tên, email, số điện thoại, địa chỉ. Khách hàng sẽ được chọn khi lập hóa đơn/báo giá.
 
-### Bước 3 — Lập báo giá (Quote) *(tùy chọn)*
+### Bước 3 — Lập báo giá (Quote) _(tùy chọn)_
 
 1. **Báo giá → Add New Quote**: chọn khách hàng, ngày, hạn hiệu lực.
 2. Thêm từng dòng sản phẩm/dịch vụ (tên, số lượng, đơn giá) → chọn thuế → hệ thống tự tính tổng.
@@ -131,7 +132,7 @@ Vào **Khách hàng → Add New Customer**, nhập tên, email, số điện tho
 ### Bước 4 — Lập hóa đơn (Invoice)
 
 1. **Hóa đơn → Add New Invoice**: chọn khách hàng, ngày, hạn thanh toán, thêm các dòng hàng và thuế.
-2. Lưu. Trạng thái hóa đơn: *draft → pending → sent…*
+2. Lưu. Trạng thái hóa đơn: _draft → pending → sent…_
 3. Từ màn hình xem hóa đơn:
    - **Tải PDF** / **Gửi email** cho khách.
    - **Record Payment** (ghi nhận thanh toán): nhập số tiền + phương thức → hóa đơn cập nhật trạng thái thanh toán (paid / partially).

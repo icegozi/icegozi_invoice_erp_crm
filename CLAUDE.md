@@ -11,21 +11,24 @@ The repo is two independent npm packages: `backend/` and `frontend/`. There is n
 ## Commands
 
 ### Backend (`cd backend`)
+
 - `npm run dev` — start with nodemon (hot reload, ignores `public/`)
 - `npm start` — start without reload (`node src/server.js`)
 - `npm run setup` — **required before first run.** Seeds the initial admin (`admin@admin.com` / `admin123`) and default settings into MongoDB. Re-running creates duplicate data.
 - `npm run reset` — wipe collections
 - `npm run upgrade` — run upgrade/migration script
-- Server listens on `PORT` env (default **8888**).
+- Server listens on `PORT` env (default **8000**).
 
 ### Frontend (`cd frontend`)
-- `npm run dev` — Vite dev server on port **3000**, proxies `/api` → `http://localhost:8888/`
+
+- `npm run dev` — Vite dev server on port **3000**, proxies `/api` → `http://localhost:8000/`
 - `npm run dev:remote` — dev against a remote backend (`VITE_BACKEND_SERVER`)
 - `npm run build` — production build
 - `npm run lint` — ESLint (`--max-warnings 0`; lint must be clean)
 - No test suite is configured in either package.
 
 ### Environment
+
 Backend reads `.env` then `.env.local` (both loaded; local overrides). Required: `DATABASE` (MongoDB URI). Also used: `JWT_SECRET`, `OPENAI_API_KEY`, `RESEND_API` (email), AWS S3 vars. Frontend uses `VITE_BACKEND_SERVER`, `VITE_FILE_BASE_URL`, `VITE_DEV_REMOTE`.
 
 ## Architecture
@@ -46,7 +49,9 @@ Adding a Mongoose model file to `backend/src/models/appModels/` automatically cr
 - **appModels / appControllers** — business entities (`Client`, `Invoice`, `Payment`) that flow through the auto-generation pattern above.
 
 ### Express app wiring (`src/app.js`)
+
 Route mounting order matters:
+
 - `/api` + `coreAuthRouter` — public auth (no token)
 - `/api` + `adminAuth.isValidAuthToken` + `coreApiRouter` — authenticated core
 - `/api` + `adminAuth.isValidAuthToken` + `erpApiRouter` — authenticated app entities
@@ -65,11 +70,13 @@ Auth is JWT via `adminAuth.isValidAuthToken` middleware; the token header is `x-
 - Path alias `@` → `src` (configured in `vite.config.js`, mirrors backend's `@` → `src` via `module-alias`).
 
 ### Adding a new business entity (end-to-end)
+
 1. Backend: add `models/appModels/Foo.js` (Mongoose schema). REST API appears automatically.
 2. Backend (optional): add `controllers/appControllers/fooController/` to override CRUD behavior.
 3. Frontend: add a page + route, and use `request`/`crud` redux with `entity: 'foo'` — no new API client code needed.
 
 ## Conventions
+
 - Both packages use the `@` alias for `src`. Backend uses CommonJS (`require`); frontend uses ESM (`"type": "module"`).
 - Models are loaded eagerly at server boot (globbed in `server.js`) so `mongoose.model('Name')` works anywhere afterward.
 - Prettier is configured in the frontend; keep `npm run lint` at zero warnings.

@@ -52,7 +52,7 @@ up: ## Start all containers (build if images don't exist)
 	@branch_or_tag=$$(git symbolic-ref -q --short HEAD || git describe --tags --exact-match 2>/dev/null || echo "unknown");\
 	sha_id=$$(git rev-parse --short HEAD 2>/dev/null || echo "unknown");\
 	echo "$$branch_or_tag - $$sha_id" > VERSION 2>/dev/null || true
-	@echo "Containers started (backend :8888 · frontend :3000 · mongo :27017)"
+	@echo "Containers started (backend :8000 · frontend :3000 · mongo :27017)"
 	@echo "VERSION file updated"
 
 up-latest: ## Rebuild images from scratch and start (no cache)
@@ -209,13 +209,13 @@ dev: ## Run backend + frontend dev servers with hot reload (Ctrl+C stops both)
 		echo "❌ Dependencies missing — run 'make install' first."; exit 1; fi
 	-@$(COMPOSE) stop backend frontend >/dev/null 2>&1 || true
 	@$(COMPOSE) up --detach mongo
-	@echo "🚀 Backend :8888 (nodemon) + Frontend :3000 (vite). Press Ctrl+C to stop both."
+	@echo "🚀 Backend :8000 (nodemon) + Frontend :3000 (vite). Press Ctrl+C to stop both."
 	@trap 'kill 0' INT TERM EXIT; \
 		(cd backend && npm run dev) & \
 		(cd frontend && npm run dev) & \
 		wait
 
-dev-backend: ## Run only the backend dev server (nodemon, :8888)
+dev-backend: ## Run only the backend dev server (nodemon, :8000)
 	@cd backend && npm run dev
 
 dev-frontend: ## Run only the frontend dev server (vite, :3000)
