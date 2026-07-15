@@ -74,10 +74,18 @@ export default function Invoice() {
     {
       title: translate('Status'),
       dataIndex: 'status',
+      render: (status) => {
+        const { color } = tagColor(status);
+        return <Tag color={color}>{translate(status)}</Tag>;
+      },
     },
     {
       title: translate('Payment'),
       dataIndex: 'paymentStatus',
+      render: (paymentStatus) => {
+        const { color } = tagColor(paymentStatus);
+        return <Tag color={color}>{translate(paymentStatus)}</Tag>;
+      },
     },
   ];
 

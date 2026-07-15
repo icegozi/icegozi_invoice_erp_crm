@@ -58,7 +58,6 @@ export default function ErpCrmApp() {
             <HeaderContent />
             <Content
               style={{
-                margin: '40px auto 30px',
                 overflowX: 'hidden',
                 width: '100%',
                 padding: '0 25px',
@@ -73,7 +72,6 @@ export default function ErpCrmApp() {
             <HeaderContent />
             <Content
               style={{
-                margin: '40px auto 30px',
                 overflowX: 'hidden',
                 width: '100%',
                 padding: '0 50px',

@@ -1,11 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
-const { Resend } = require('resend');
-
 const pdfController = require('@/controllers/pdfController');
 const { loadSettings } = require('@/middlewares/settings');
 const emailTemplates = require('@/emailTemplate/SendEmailTemplate');
+const { sendMail } = require('./mailer');
 
 // Render the document PDF to `targetLocation` and resolve once it is written to disk.
 function renderPdf(modelName, result, targetLocation) {
@@ -29,7 +28,7 @@ function renderPdf(modelName, result, targetLocation) {
 
 /**
  * Factory: build an Express handler that emails a document (Invoice/Quote) to its client
- * with the rendered PDF attached, using Resend.
+ * with the rendered PDF attached, using the local Mailpit SMTP server.
  *
  * @param {string} modelName  Mongoose model name, e.g. 'Invoice' | 'Quote'
  * @param {string} template   Key in SendEmailTemplate.js, e.g. 'SendInvoice' | 'SendQuote'
@@ -39,16 +38,6 @@ const sendDocumentMail = ({ modelName, template = 'SendInvoice', label }) => {
   const docLabel = label || modelName;
 
   return async (req, res) => {
-    // 1) Email must be configured
-    if (!process.env.RESEND_API) {
-      return res.status(400).json({
-        success: false,
-        result: null,
-        message:
-          'Chức năng gửi email chưa được cấu hình. Hãy đặt RESEND_API (và OPENING_EMAIL) trong file .env rồi khởi động lại.',
-      });
-    }
-
     const id = req.body.id || req.params.id;
     const Model = mongoose.model(modelName);
     const result = await Model.findOne({ _id: id, removed: false }).populate('client').exec();
@@ -70,8 +59,7 @@ const sendDocumentMail = ({ modelName, template = 'SendInvoice', label }) => {
     // 3) Render the PDF to disk
     const settings = await loadSettings();
     const companyName = settings['company_name'] || 'InvoiceCRM';
-    const fromEmail =
-      process.env.OPENING_EMAIL || settings['invoice_app_email'] || 'onboarding@resend.dev';
+    const fromEmail = process.env.MAIL_FROM || settings['invoice_app_email'] || 'noreply@invoicecrm.test';
 
     const fileName = `${modelName.toLowerCase()}-${result._id}.pdf`;
     const targetLocation = path.join(
@@ -93,35 +81,38 @@ const sendDocumentMail = ({ modelName, template = 'SendInvoice', label }) => {
       });
     }
 
-    // 4) Send via Resend with the PDF attached
+    // 4) Send to Mailpit with the PDF attached. Mailpit captures messages locally
+    // and never relays them to real recipients.
     const buildTemplate = emailTemplates[template] || emailTemplates.SendInvoice;
-    const subject = `${docLabel} #${result.number}/${result.year} — ${companyName}`;
+    const documentNumber = result.year ? `${result.number}/${result.year}` : result.number;
+    const subject = `${docLabel} #${documentNumber} — ${companyName}`;
     const pdfContent = fs.readFileSync(targetLocation);
 
-    const resend = new Resend(process.env.RESEND_API);
-    const { data, error } = await resend.emails.send({
-      from: fromEmail,
-      to: toEmail,
-      subject,
-      html: buildTemplate({ title: subject, name: result.client.name }),
-      attachments: [{ filename: fileName, content: pdfContent }],
-    });
-
-    if (error) {
+    try {
+      await sendMail({
+        from: fromEmail,
+        to: toEmail,
+        subject,
+        html: buildTemplate({ title: subject, name: result.client.name }),
+        attachments: [{ filename: fileName, content: pdfContent }],
+      });
+    } catch (error) {
       return res.status(503).json({
         success: false,
         result: null,
-        message: `Gửi email thất bại: ${error.message || error.name || 'unknown error'}`,
+        message: `Không thể gửi email tới Mailpit: ${error.message || error.name || 'unknown error'}`,
       });
     }
 
-    // 5) Mark the document as "sent"
-    await Model.updateOne({ _id: result._id }, { $set: { status: 'sent' } });
+    // 5) Mark invoices and quotes as "sent". Payment receipts do not have a status field.
+    if (modelName !== 'Payment') {
+      await Model.updateOne({ _id: result._id }, { $set: { status: 'sent' } });
+    }
 
     return res.status(200).json({
       success: true,
       result,
-      message: `Đã gửi ${docLabel} #${result.number}/${result.year} tới ${toEmail}`,
+      message: `Email ${docLabel} #${documentNumber} đã được lưu trong Mailpit cho ${toEmail}`,
     });
   };
 };

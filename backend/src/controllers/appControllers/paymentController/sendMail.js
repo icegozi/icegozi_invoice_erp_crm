@@ -1,9 +1,7 @@
-const mail = async (req, res) => {
-  return res.status(200).json({
-    success: true,
-    result: null,
-    message: 'Please Upgrade to Premium  Version to have full features',
-  });
-};
+const sendDocumentMail = require('@/handlers/mailHandler/sendDocumentMail');
 
-module.exports = mail;
+module.exports = sendDocumentMail({
+  modelName: 'Payment',
+  template: 'SendPaymentReceipt',
+  label: 'Payment Receipt',
+});

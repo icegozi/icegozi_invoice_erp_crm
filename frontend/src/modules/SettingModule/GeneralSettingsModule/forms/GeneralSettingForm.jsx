@@ -1,15 +1,31 @@
-import { useDispatch, useSelector } from 'react-redux';
-import { Input, Form, Select, Switch } from 'antd';
-import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
+import { Input, Form, Select } from 'antd';
 
 import useLanguage from '@/locale/useLanguage';
+import { useLocale } from '@/locale/Localization';
 
 export default function GeneralSettingForm() {
   const translate = useLanguage();
-  const dispatch = useDispatch();
+  const { setLanguage } = useLocale();
 
   return (
     <div>
+      <Form.Item
+        label={translate('language')}
+        name="invoice_app_language"
+        rules={[
+          {
+            required: true,
+          },
+        ]}
+      >
+        <Select
+          options={[
+            { value: 'vi_vn', label: 'Tiếng Việt' },
+            { value: 'en_us', label: 'English' },
+          ]}
+          onChange={setLanguage}
+        />
+      </Form.Item>
       <Form.Item
         label={translate('Date Format')}
         name="invoice_app_date_format"

@@ -1,55 +1,26 @@
-const getLabel = (key) => {
-  try {
-    const lowerCaseKey = key
-      .toLowerCase()
-      .replace(/[^a-zA-Z0-9]/g, '_')
-      .replace(/ /g, '_');
+import languages from './translation/translation';
+import { useLocale } from './Localization';
 
-    // if (lang[lowerCaseKey]) return lang[lowerCaseKey];
+const normaliseKey = (key) =>
+  String(key)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '');
 
-    // convert no found language label key to label
-
-    const remove_underscore_fromKey = key.replace(/_/g, ' ').split(' ');
-
-    const conversionOfAllFirstCharacterofEachWord = remove_underscore_fromKey.map(
-      (word) => word[0].toUpperCase() + word.substring(1)
-    );
-
-    const label = conversionOfAllFirstCharacterofEachWord.join(' ');
-
-    const result = window.localStorage.getItem('lang');
-    if (!result) {
-      let list = {};
-      list[lowerCaseKey] = label;
-      window.localStorage.setItem('lang', JSON.stringify(list));
-    } else {
-      let list = { ...JSON.parse(result) };
-      list[lowerCaseKey] = label;
-      window.localStorage.removeItem('lang');
-      window.localStorage.setItem('lang', JSON.stringify(list));
-    }
-    // console.error(
-    //   '🇩🇿 🇧🇷 🇻🇳 🇮🇩 🇨🇳 Language Label Warning : translate("' +
-    //     lowerCaseKey +
-    //     '") failed to get label for this key : ' +
-    //     lowerCaseKey +
-    //     ' please review your language config file and add this label'
-    // );
-    return label;
-  } catch (error) {
-    // console.error(
-    //   '🚨 error getting this label : translate("' +
-    //     key +
-    //     '") failed to get label for this key : ' +
-    //     key +
-    //     ' please review your language config file and add this label'
-    // );
-    return 'No translate';
-  }
-};
+const fallbackLabel = (key) =>
+  normaliseKey(key)
+    .split('_')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 
 const useLanguage = () => {
-  const translate = (value) => getLabel(value);
+  const { language } = useLocale();
+  const translate = (value) => {
+    const key = normaliseKey(value);
+    return languages[language]?.[key] || languages.en_us?.[key] || fallbackLabel(value);
+  };
 
   return translate;
 };
