@@ -29,7 +29,7 @@ const AuthModule = ({ authContent, AUTH_TITLE, isForRegistre = false }) => {
               color: '#1640D6',
             }}
           >
-            InvoiceCRM
+            ic_goz_crm
           </div>
           <div className="space10" />
         </Col>

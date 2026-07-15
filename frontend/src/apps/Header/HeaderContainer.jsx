@@ -84,8 +84,9 @@ export default function HeaderContent() {
 
   return (
     <Header
+      className="appHeader"
       style={{
-        padding: '20px',
+        padding: '12px 20px',
         background: '#ffffff',
         display: 'flex',
         justifyContent: 'flex-end',

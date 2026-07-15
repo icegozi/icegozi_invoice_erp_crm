@@ -42,6 +42,9 @@
 .ant-table-thead > tr > th {
   font-weight: 700;
 }
+.ant-table {
+  font-size: 14px;
+}
 .ant-typography strong {
   font-weight: 700;
 }
@@ -75,7 +78,45 @@ h6 {
 }
 
 .ant-menu-item {
-  height: 36px !important;
+  min-height: 44px;
+  height: auto !important;
+  line-height: 1.35 !important;
+  padding-top: 11px;
+  padding-bottom: 11px;
+  white-space: normal;
+}
+.ant-menu-item .ant-menu-title-content {
+  line-height: 1.35;
+}
+
+.settingsContent {
+  padding: 32px;
+}
+
+.settingsTabLabel {
+  display: inline-block;
+  padding-right: 12px;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+.tabContent .ant-tabs-tab {
+  height: auto;
+  min-height: 44px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.ant-pro-page-container .ant-page-header-heading,
+.ant-page-header-heading {
+  gap: 12px;
+}
+
+.ant-pro-page-container .ant-page-header-heading-extra,
+.ant-page-header-heading-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 @media (max-width: 768px) {
   .tabContent .ant-tabs-right > .ant-tabs-content-holder > .ant-tabs-content > .ant-tabs-tabpane {
@@ -84,6 +125,17 @@ h6 {
   }
   .tabContent .ant-tabs {
     display: block;
+  }
+  .settingsContent {
+    padding: 24px 16px;
+  }
+  .ant-pro-page-container .ant-page-header-heading-extra,
+  .ant-page-header-heading-extra {
+    width: 100%;
+  }
+  .ant-pro-page-container .ant-page-header-heading-extra > *,
+  .ant-page-header-heading-extra > * {
+    flex: 1 1 auto;
   }
 }
 @media (prefers-reduced-motion: no-preference) {
