@@ -33,6 +33,7 @@ const lang = {
   company_cell: 'Điện thoại di động', company_website: 'Website doanh nghiệp', company_tax_number: 'Mã số thuế', company_vat_number: 'Mã số VAT',
   company_reg_number: 'Số đăng ký kinh doanh', company_bank_account: 'Tài khoản ngân hàng', update_company_logo: 'Cập nhật logo doanh nghiệp',
   money_format_settings: 'Định dạng tiền tệ', default_currency: 'Tiền tệ mặc định', select_default_currency: 'Chọn tiền tệ mặc định',
+  currency_symbol: 'Ký hiệu tiền tệ', currency_position: 'Vị trí ký hiệu tiền tệ',
   update_company_finance_settings: 'Cập nhật cài đặt tài chính', last_invoice_number: 'Số hóa đơn gần nhất', last_quote_number: 'Số báo giá gần nhất',
   last_offer_number: 'Số đề nghị gần nhất', last_payment_number: 'Số thanh toán gần nhất', add_new_client: 'Thêm khách hàng', delete: 'Xóa',
   type: 'Loại', phone: 'Số điện thoại', refresh: 'Làm mới', are_you_sure_you_want_to_delete: 'Bạn có chắc muốn xóa?', delete_confirmation: 'Xác nhận xóa',
