@@ -27,6 +27,12 @@
   margin-right: 30px;
 }
 
+@media only screen and (max-width: 768px) {
+  .appHeader {
+    padding: 8px 16px !important;
+  }
+}
+
 .profileDropdown {
   display: flex;
   min-width: 200px;

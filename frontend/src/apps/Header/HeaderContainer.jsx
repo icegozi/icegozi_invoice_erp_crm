@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import { Avatar, Dropdown, Layout, Badge, Button } from 'antd';
+import { Avatar, Button, Dropdown, Layout } from 'antd';
 
 // import Notifications from '@/components/Notification';
 
@@ -84,13 +84,13 @@ export default function HeaderContent() {
 
   return (
     <Header
+      className="appHeader"
       style={{
-        padding: '20px',
+        padding: '12px 20px',
         background: '#ffffff',
         display: 'flex',
-        flexDirection: 'row-reverse',
-        justifyContent: 'flex-start',
-        gap: ' 15px',
+        justifyContent: 'flex-end',
+        gap: '12px',
       }}
     >
       <Dropdown

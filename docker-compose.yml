@@ -16,6 +16,13 @@ services:
       timeout: 5s
       retries: 5
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: invoice-mailpit
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8026:8025"
+
   backend:
     build:
       context: ./backend
@@ -24,22 +31,28 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     environment:
       # Docker always uses the bundled MongoDB service (ignores DATABASE in .env)
       DATABASE: "mongodb://mongo:27017/invoice"
-      PORT: "8888"
+      PORT: "8000"
       NODE_ENV: "production"
       JWT_SECRET: "${JWT_SECRET:-change_this_jwt_secret_in_production}"
       # Public URLs (links in emails, file URLs)
       FRONTEND_URL: "${FRONTEND_URL:-http://localhost:3000}"
-      PUBLIC_SERVER_FILE: "${VITE_BACKEND_SERVER:-http://localhost:8888/}"
-      # Email (Resend) — leave RESEND_API empty to disable email sending
-      RESEND_API: "${RESEND_API:-}"
-      OPENING_EMAIL: "${OPENING_EMAIL:-onboarding@resend.dev}"
+      PUBLIC_SERVER_FILE: "${VITE_BACKEND_SERVER:-http://localhost:8000/}"
+      # Email is captured locally by Mailpit and is never delivered externally.
+      SMTP_HOST: "${SMTP_HOST:-mailpit}"
+      SMTP_PORT: "${SMTP_PORT:-1025}"
+      SMTP_SECURE: "${SMTP_SECURE:-false}"
+      SMTP_USER: "${SMTP_USER:-}"
+      SMTP_PASS: "${SMTP_PASS:-}"
+      MAIL_FROM: "${MAIL_FROM:-noreply@invoicecrm.test}"
       # AI (optional)
       OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
     ports:
-      - "8888:8888"
+      - "8000:8000"
     volumes:
       - uploads-data:/app/src/public/uploads
 
@@ -48,8 +61,8 @@ services:
       context: ./frontend
       args:
         # Baked into the build (browser talks to backend directly)
-        VITE_BACKEND_SERVER: "${VITE_BACKEND_SERVER:-http://localhost:8888/}"
-        VITE_FILE_BASE_URL: "${VITE_FILE_BASE_URL:-http://localhost:8888/}"
+        VITE_BACKEND_SERVER: "${VITE_BACKEND_SERVER:-http://localhost:8000/}"
+        VITE_FILE_BASE_URL: "${VITE_FILE_BASE_URL:-http://localhost:8000/}"
     container_name: invoice-frontend
     restart: unless-stopped
     depends_on:

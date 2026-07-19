@@ -232,6 +232,8 @@ const lang = {
   client: 'Client',
   total: 'Total',
   status: 'Status',
+  attribute: 'Attribute',
+  attributes: 'Attributes',
   invoices_preview: 'Invoices Preview',
   quotes_preview: 'Quotes Preview',
   offers_preview: 'Offers Preview',
@@ -449,7 +451,17 @@ const lang = {
   enter_code: 'Enter Code',
   offers: 'Offers',
   proforma_invoices: 'quote',
+  proforma_invoice: 'Proforma Invoice',
+  proforma_invoice_list: 'Proforma Invoice List',
+  add_new_proforma_invoice: 'Add New Proforma Invoice',
   search: 'search',
+  auth_hero_title: 'Invoice, Quote & Payment Management',
+  auth_hero_description: 'A modern ERP / CRM solution for your business.',
+  about_description: 'A practical application for customer and invoice management.',
+  version: 'Version',
+  contact: 'Contact',
+  about_team: 'Advanced Database Team 3',
+  feedback: 'Feedback',
 };
 
 export default lang;

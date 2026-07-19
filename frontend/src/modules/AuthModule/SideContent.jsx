@@ -28,7 +28,7 @@ export default function SideContent() {
             letterSpacing: '0.5px',
           }}
         >
-          InvoiceCRM
+          ic_goz_crm
         </div>
 
         <Title level={1} style={{ fontSize: 28 }}>

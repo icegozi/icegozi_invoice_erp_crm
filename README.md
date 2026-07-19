@@ -1,152 +1,205 @@
-# ERP / CRM
+# ic_goz_crm
 
-Open-source **ERP / CRM** quản lý Hóa đơn (Invoice), Báo giá (Quote), Thanh toán (Payment) và Khách hàng (Customer), xây trên **MERN stack**.
+`ic_goz_crm` là hệ thống quản lý quan hệ khách hàng và nghiệp vụ lập chứng từ cho doanh nghiệp nhỏ: khách hàng, hóa đơn, hóa đơn tạm tính, thanh toán, thuế và cài đặt doanh nghiệp. Tài liệu này là đặc tả triển khai và vận hành cho phiên bản hiện tại.
 
-## Tính năng
+## 1. Mục tiêu và phạm vi
 
-- 🧾 **Hóa đơn (Invoice)** — tạo, gửi email, ghi nhận thanh toán, xuất PDF
-- 📄 **Báo giá (Quote)** — tạo báo giá và chuyển đổi thành hóa đơn
-- 💳 **Thanh toán (Payment)** — quản lý thanh toán và phương thức thanh toán
-- 👥 **Khách hàng (Customer)** — quản lý thông tin khách hàng
-- ⚙️ **Thuế & Cài đặt** — cấu hình thuế, công ty, tiền tệ, ngôn ngữ
-- 🔐 Xác thực admin bằng JWT, phân quyền theo vai trò
+Mục tiêu của hệ thống là giúp người quản trị tạo, theo dõi và gửi chứng từ cho khách hàng từ một giao diện web song ngữ Việt/Anh.
 
-## Công nghệ
+Phạm vi bao gồm:
 
-| Tầng | Stack |
-|------|-------|
-| Backend | Node.js 20 · Express · MongoDB (Mongoose) |
-| Frontend | React 18 · Vite · Ant Design · Redux Toolkit |
-| Hạ tầng | Docker · Docker Compose · Nginx |
+- Quản lý khách hàng, địa chỉ, số điện thoại và email.
+- Lập hóa đơn, hóa đơn tạm tính/báo giá, tính thuế và xuất PDF.
+- Ghi nhận thanh toán, theo dõi trạng thái thanh toán và xuất biên nhận.
+- Gửi chứng từ qua email; môi trường phát triển dùng Mailpit để xem thư mà không gửi ra Internet.
+- Cấu hình thông tin doanh nghiệp, tiền tệ, logo và ngôn ngữ hiển thị.
+- Đăng nhập quản trị, cập nhật hồ sơ, đổi và khôi phục mật khẩu.
 
-> Backend tự sinh REST API cho mỗi model trong `backend/src/models/appModels/` — xem chi tiết kiến trúc trong [CLAUDE.md](CLAUDE.md).
+Ngoài phạm vi: kế toán sổ cái, đồng bộ ngân hàng, cổng thanh toán trực tuyến và phân quyền nghiệp vụ chi tiết theo nhiều cấp.
 
----
+## 2. Đặc tả chức năng
 
-## Cài đặt (khuyến nghị: Docker)
+| Phân hệ          | Yêu cầu chính                                                                                           |
+| ---------------- | ------------------------------------------------------------------------------------------------------- |
+| Xác thực         | Đăng nhập bằng JWT; đổi mật khẩu; gửi liên kết đặt lại mật khẩu có thời hạn.                            |
+| Khách hàng       | Tạo, xem, sửa, tìm kiếm và lưu thông tin liên hệ khách hàng.                                            |
+| Hóa đơn          | Tạo dòng hàng/dịch vụ, tính số lượng × đơn giá × thuế, theo dõi trạng thái, tải PDF và gửi email.       |
+| Hóa đơn tạm tính | Tạo, chỉnh sửa, gửi PDF qua email và chuyển đổi thành hóa đơn khi cần.                                  |
+| Thanh toán       | Ghi nhận thanh toán, phương thức thanh toán, số tiền và biên nhận PDF.                                  |
+| Thuế & cài đặt   | Quản lý thuế, thông tin công ty, tiền tệ, logo và ngôn ngữ Việt/Anh.                                    |
+| Giao diện        | Responsive cho desktop/tablet/mobile; các trạng thái nghiệp vụ và nhãn chính được dịch sang tiếng Việt. |
 
-Cách nhanh nhất — chạy toàn bộ (MongoDB + Backend + Frontend) trong Docker, không cần cài Node hay MongoDB trên máy.
+### Trạng thái nghiệp vụ
 
-### Yêu cầu
-- Docker Engine 20+ và Docker Compose v2
+- Chứng từ có thể ở các trạng thái như `draft`, `pending`, `sent`, `on hold`, `cancelled`.
+- Trạng thái thanh toán gồm `paid`, `partially`, `unpaid` theo dữ liệu thanh toán đã ghi nhận.
+- Trạng thái hiển thị được dịch theo ngôn ngữ đã chọn; mã trạng thái trong API vẫn giữ nguyên để tương thích dữ liệu.
 
-### Chạy
+## 3. Kiến trúc
+
+```text
+Trình duyệt (React + Vite + Ant Design)
+                │ HTTPS/HTTP REST
+                ▼
+      API (Node.js + Express + Mongoose)
+          ├────► MongoDB: dữ liệu nghiệp vụ
+          └────► SMTP: Mailpit ở môi trường phát triển
+                         hoặc SMTP thật ở môi trường triển khai
+```
+
+| Tầng             | Công nghệ                                 |
+| ---------------- | ----------------------------------------- |
+| Frontend         | React 18, Vite, Ant Design, Redux Toolkit |
+| Backend          | Node.js 20, Express, Mongoose             |
+| Dữ liệu          | MongoDB                                   |
+| Hạ tầng          | Docker Compose, Nginx                     |
+| Email phát triển | Mailpit qua SMTP                          |
+
+Quy ước API, model và cấu trúc backend được mô tả thêm trong [CLAUDE.md](CLAUDE.md).
+
+## 4. Yêu cầu phi chức năng
+
+- **Khả dụng:** giao diện đáp ứng trên màn hình nhỏ; thao tác gửi mail không làm treo luồng tạo chứng từ.
+- **Dữ liệu:** các phép tính tiền cần được xác nhận ở backend; các giá trị thiếu hiển thị bằng dấu `—`, không làm hỏng bảng dữ liệu.
+- **Bảo mật:** mật khẩu được băm; token đặt lại mật khẩu chỉ có hiệu lực 15 phút và chỉ lưu bản băm; nội dung email được escape trước khi chèn HTML.
+- **Email:** Mailpit chỉ dùng cho phát triển/kiểm thử. Muốn gửi thư thật phải cấu hình SMTP hợp lệ.
+- **Tương thích:** mã trạng thái và endpoint hiện có được giữ nguyên; việc dịch chỉ thay đổi nội dung hiển thị.
+
+## 5. Khởi chạy bằng Docker
+
+### Điều kiện
+
+- Docker Engine 20+ và Docker Compose v2.
+
+### Cài đặt
+
+```bash
+cp .env.example .env
+# Bắt buộc đổi JWT_SECRET trước khi đưa ra môi trường thật
+docker compose up -d --build
+```
+
+Lần chạy đầu, backend chờ MongoDB sẵn sàng rồi seed dữ liệu và tài khoản quản trị mặc định.
+
+| Dịch vụ      | Địa chỉ mặc định          | Mục đích                |
+| ------------ | ------------------------- | ----------------------- |
+| Ứng dụng web | http://localhost:3000     | Giao diện quản trị      |
+| Backend API  | http://localhost:8000     | REST API                |
+| Mailpit      | http://localhost:8026     | Hộp thư kiểm thử nội bộ |
+| MongoDB      | mongodb://localhost:27017 | Cơ sở dữ liệu `invoice` |
+
+Tài khoản ban đầu: `admin@admin.com` / `admin123`. Chỉ dùng cho môi trường mới tạo; hãy đổi mật khẩu ngay sau lần đăng nhập đầu tiên.
+
+Các lệnh vận hành thường dùng:
+
+```bash
+docker compose logs -f backend
+docker compose ps
+docker compose down
+docker compose down -v  # xóa cả dữ liệu MongoDB, chỉ dùng khi chủ động làm mới
+```
+
+## 6. Cấu hình
+
+Tạo file `.env` ở thư mục gốc từ `.env.example`. Không đưa file chứa bí mật vào Git.
+
+| Biến                     | Mô tả                                   | Giá trị phát triển điển hình                                  |
+| ------------------------ | --------------------------------------- | ------------------------------------------------------------- |
+| `DATABASE`               | Chuỗi kết nối MongoDB                   | `mongodb://mongo:27017/invoice` khi chạy Docker               |
+| `JWT_SECRET`             | Bí mật ký JWT                           | Chuỗi ngẫu nhiên dài, riêng cho từng môi trường               |
+| `FRONTEND_URL`           | URL public của frontend                 | `http://localhost:3000`                                       |
+| `VITE_BACKEND_SERVER`    | URL API mà frontend gọi                 | `http://localhost:8000/`                                      |
+| `VITE_FILE_BASE_URL`     | URL phục vụ tệp/PDF                     | `http://localhost:8000/`                                      |
+| `SMTP_HOST`              | Máy chủ SMTP                            | `mailpit` trong Docker; `localhost` khi chạy Mailpit trên máy |
+| `SMTP_PORT`              | Cổng SMTP                               | `1025`                                                        |
+| `SMTP_SECURE`            | Dùng TLS ngay từ đầu hay không          | `false` cho Mailpit                                           |
+| `SMTP_USER`, `SMTP_PASS` | Thông tin SMTP nếu nhà cung cấp yêu cầu | để trống với Mailpit                                          |
+| `MAIL_FROM`              | Địa chỉ/người gửi hiển thị              | `ic_goz_crm <noreply@example.test>`                           |
+| `OPENAI_API_KEY`         | Khóa tích hợp AI, nếu sử dụng           | để trống nếu không dùng                                       |
+
+Sau khi đổi biến môi trường Docker, áp dụng lại bằng:
 
 ```bash
 docker compose up -d --build
 ```
 
-Lần đầu chạy, backend tự chờ MongoDB sẵn sàng rồi **tự seed** tài khoản admin và cấu hình mặc định.
+### Gửi email thật
 
-| Service | URL | Ghi chú |
-|---------|-----|---------|
-| Frontend | http://localhost:3000 | Giao diện ứng dụng |
-| Backend API | http://localhost:8888 | REST API |
-| MongoDB | mongodb://localhost:27017 | Database `invoice` |
-
-**Đăng nhập mặc định:** `admin@admin.com` / `admin123` *(đổi mật khẩu ngay sau khi đăng nhập)*
-
-### Lệnh thường dùng
-
-```bash
-docker compose logs -f backend     # xem log backend
-docker compose down                # dừng (giữ dữ liệu)
-docker compose down -v             # dừng + xóa toàn bộ dữ liệu
-```
-
-### Cấu hình (tùy chọn) — một file `.env` duy nhất
-
-Toàn bộ cấu hình (cả backend lẫn frontend) nằm trong **một file `.env` ở thư mục gốc**. Không tạo cũng chạy được (đã có giá trị mặc định). Để tùy chỉnh:
-
-```bash
-cp .env.example .env    # rồi sửa giá trị
-```
-
-Các biến chính trong `.env`:
+Mailpit mặc định nhận thư tại giao diện nội bộ nên **không gửi ra email thật**. Để gửi thật, thay các biến SMTP bằng thông tin của nhà cung cấp (ví dụ SMTP công ty, Amazon SES, SendGrid hoặc Gmail Workspace), đồng thời dùng địa chỉ `MAIL_FROM` đã được nhà cung cấp xác thực.
 
 ```env
-JWT_SECRET=chuoi_bi_mat_dai_ngau_nhien
-FRONTEND_URL=http://localhost:3000        # URL public của app
-VITE_BACKEND_SERVER=http://localhost:8888/  # URL backend (frontend gọi tới)
-VITE_FILE_BASE_URL=http://localhost:8888/
-RESEND_API=                               # API key Resend để gửi email (trống = tắt email)
-OPENING_EMAIL=onboarding@resend.dev       # email gửi đi (verify trên Resend)
-OPENAI_API_KEY=                           # (tùy chọn) tích hợp AI
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-smtp-user
+SMTP_PASS=your-smtp-password
+MAIL_FROM="ic_goz_crm <billing@example.com>"
 ```
 
-> Email (Resend) và OpenAI là tùy chọn — bỏ trống vẫn chạy được các chức năng cốt lõi.
-> Sau khi sửa `.env`, chạy lại `docker compose up -d --build` để áp dụng.
+Không dùng thông tin SMTP thật trong môi trường local hoặc file `.env` được commit.
 
-Chi tiết Docker xem thêm tại [DOCKER.md](DOCKER.md).
+## 7. Chạy thủ công
 
----
-
-## Cài đặt thủ công (không dùng Docker)
-
-Yêu cầu: **Node.js 20.9.0**, **npm 10.2.4**, và một MongoDB URI (local hoặc MongoDB Atlas).
+Yêu cầu: Node.js 20.9.0+, npm 10.2.4+, một MongoDB đang chạy và (nếu cần email thử nghiệm) Mailpit.
 
 ```bash
-# 1. Backend
-cd backend
-cp .env .env.local              # rồi sửa DATABASE="<mongodb-uri>" trong .env.local
-npm install
-npm run setup                   # seed admin + cấu hình mặc định (chạy 1 lần)
-npm run dev                     # backend chạy ở cổng 8888
+cp .env.example .env
 
-# 2. Frontend (terminal khác)
-cd frontend
+cd backend
 npm install
-npm run dev                     # frontend chạy ở cổng 3000
+npm run setup
+npm run dev
 ```
 
-Mở http://localhost:3000 và đăng nhập với `admin@admin.com` / `admin123`.
+Mở terminal khác:
 
-Các lệnh khác: `npm run reset` (xóa dữ liệu), `npm run build` (build frontend), `npm run lint` (kiểm tra lint frontend). Hướng dẫn chi tiết hơn xem [INSTALLATION-INSTRUCTIONS.md](INSTALLATION-INSTRUCTIONS.md).
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
----
+Khi backend chạy bên ngoài Docker nhưng Mailpit chạy cục bộ, đặt `SMTP_HOST=localhost`. Khi cả hai chạy trong Docker Compose, giữ `SMTP_HOST=mailpit`.
 
-## Hướng dẫn sử dụng
+## 8. Quy trình sử dụng chuẩn
 
-Sau khi đăng nhập (`admin@admin.com` / `admin123`), thanh menu bên trái gồm:
-**Dashboard · Khách hàng · Hóa đơn · Báo giá · Thanh toán · Phương thức thanh toán · Thuế · Cài đặt · Giới thiệu**.
+1. Đăng nhập, đổi mật khẩu mặc định và vào **Cài đặt** để khai báo công ty, tiền tệ, logo và ngôn ngữ.
+2. Tạo thuế và phương thức thanh toán phù hợp.
+3. Tạo khách hàng với email hợp lệ.
+4. Lập hóa đơn tạm tính hoặc hóa đơn; thêm các dòng hàng/dịch vụ và kiểm tra tổng tiền.
+5. Lưu, tải PDF hoặc dùng chức năng gửi email. Với cấu hình mặc định, kiểm tra thư tại Mailpit.
+6. Khi nhận tiền, ghi nhận thanh toán để cập nhật trạng thái chứng từ và tạo biên nhận.
 
-> Trang chủ (Dashboard) hiện hiển thị danh sách **Hóa đơn**.
+## 9. Kiểm thử và tiêu chí nghiệm thu
 
-### Bước 1 — Cấu hình ban đầu (nên làm trước)
+Trước khi bàn giao hoặc triển khai, xác nhận tối thiểu:
 
-1. **Cài đặt → Settings**: nhập thông tin công ty, tiền tệ, ngôn ngữ, logo. Đây là thông tin in trên hóa đơn/báo giá.
-2. **Thuế (Taxes)**: hệ thống đã có sẵn "Tax 0%". Bấm **Add New Tax** để thêm thuế (vd: VAT 10%) và đặt **Default** nếu muốn áp dụng mặc định.
-3. **Phương thức thanh toán (Payment Mode)**: đã có sẵn "Default Payment". Thêm/sửa các phương thức (Tiền mặt, Chuyển khoản…) tùy nhu cầu.
+- [ ] Đăng nhập được và không còn dùng mật khẩu quản trị mặc định.
+- [ ] Tạo/sửa/xóa khách hàng, hóa đơn tạm tính, hóa đơn và thanh toán hoạt động đúng.
+- [ ] Tổng tiền, thuế, số tiền đã trả và trạng thái thanh toán khớp dữ liệu nhập.
+- [ ] PDF tải được và email xuất hiện trong Mailpit; không có thư thật nào được gửi ở môi trường test.
+- [ ] Chuyển Việt/Anh trong **Cài đặt** và các nhãn, trạng thái chính hiển thị đúng.
+- [ ] Giao diện kiểm tra ở desktop, tablet và mobile; bảng không vỡ với tên hoặc địa chỉ dài.
+- [ ] Frontend build thành công:
 
-### Bước 2 — Tạo khách hàng
+```bash
+cd frontend && npm run build
+```
 
-Vào **Khách hàng → Add New Customer**, nhập tên, email, số điện thoại, địa chỉ. Khách hàng sẽ được chọn khi lập hóa đơn/báo giá.
+## 10. Triển khai và bảo mật
 
-### Bước 3 — Lập báo giá (Quote) *(tùy chọn)*
+- Dùng `JWT_SECRET` ngẫu nhiên, dài và khác nhau giữa development/staging/production.
+- Đặt frontend sau HTTPS, giới hạn CORS theo domain thật và không mở MongoDB công khai.
+- Chỉ công bố cổng cần thiết; giao diện Mailpit không nên mở ra Internet.
+- Dùng SMTP thật đã xác thực tên miền cho production; theo dõi lỗi gửi mail và log backend.
+- Sao lưu MongoDB định kỳ, kiểm thử khôi phục và cập nhật dependencies theo lịch.
+- Tạo tài khoản quản trị riêng cho từng người vận hành; không dùng chung tài khoản seed.
 
-1. **Báo giá → Add New Quote**: chọn khách hàng, ngày, hạn hiệu lực.
-2. Thêm từng dòng sản phẩm/dịch vụ (tên, số lượng, đơn giá) → chọn thuế → hệ thống tự tính tổng.
-3. Lưu. Từ màn hình xem báo giá có thể: **gửi email**, **tải PDF**, hoặc **Convert to Invoice** (chuyển thành hóa đơn).
+## 11. Cấu trúc mã nguồn
 
-### Bước 4 — Lập hóa đơn (Invoice)
-
-1. **Hóa đơn → Add New Invoice**: chọn khách hàng, ngày, hạn thanh toán, thêm các dòng hàng và thuế.
-2. Lưu. Trạng thái hóa đơn: *draft → pending → sent…*
-3. Từ màn hình xem hóa đơn:
-   - **Tải PDF** / **Gửi email** cho khách.
-   - **Record Payment** (ghi nhận thanh toán): nhập số tiền + phương thức → hóa đơn cập nhật trạng thái thanh toán (paid / partially).
-
-### Bước 5 — Theo dõi thanh toán
-
-Vào **Thanh toán (Payments)** để xem toàn bộ giao dịch đã ghi nhận, xem chi tiết hoặc tải biên nhận PDF.
-
-### Quản lý tài khoản
-
-- **Hồ sơ (Profile)** (góc trên bên phải): cập nhật tên, ảnh đại diện, **đổi mật khẩu**.
-- 🔐 Khuyến nghị: đổi ngay mật khẩu mặc định `admin123` sau lần đăng nhập đầu tiên.
-
----
-
-## Giấy phép
-
-Dựa trên [IDURAR](https://github.com/idurar/idurar-erp-crm), phát hành theo **GNU AGPL v3.0**. Xem [LICENSE](LICENSE).
+```text
+backend/       Express API, model Mongoose, PDF và gửi email
+frontend/      React SPA, i18n, Redux và giao diện Ant Design
+docker-compose.yml
+.env.example   Mẫu cấu hình môi trường
+```

@@ -37,10 +37,8 @@ export default function Navigation() {
 function Sidebar({ collapsible, isMobile = false }) {
   let location = useLocation();
 
-  const { state: stateApp, appContextAction } = useAppContext();
-  const { isNavMenuClose } = stateApp;
+  const { appContextAction } = useAppContext();
   const { navMenu } = appContextAction;
-  const [showLogoApp, setLogoApp] = useState(isNavMenuClose);
   const [currentPath, setCurrentPath] = useState(location.pathname.slice(1));
 
   const translate = useLanguage();
@@ -105,17 +103,6 @@ function Sidebar({ collapsible, isMobile = false }) {
       }
   }, [location, currentPath]);
 
-  useEffect(() => {
-    if (isNavMenuClose) {
-      setLogoApp(isNavMenuClose);
-    }
-    const timer = setTimeout(() => {
-      if (!isNavMenuClose) {
-        setLogoApp(isNavMenuClose);
-      }
-    }, 200);
-    return () => clearTimeout(timer);
-  }, [isNavMenuClose]);
   const onCollapse = () => {
     navMenu.collapse();
   };
@@ -138,23 +125,15 @@ function Sidebar({ collapsible, isMobile = false }) {
       theme={'light'}
     >
       <div
-        className="logo"
+        className="brandLogo"
         onClick={() => navigate('/')}
         style={{
           cursor: 'pointer',
         }}
       >
-        <span
-          style={{
-            fontSize: showLogoApp ? 22 : 22,
-            fontWeight: 700,
-            color: '#1640D6',
-            whiteSpace: 'nowrap',
-            lineHeight: '40px',
-            letterSpacing: '0.5px',
-          }}
-        >
-          {showLogoApp ? 'IC' : 'InvoiceCRM'}
+        <span className="brandLogoMark">IG</span>
+        <span className="brandLogoName">
+          ic_goz<strong>_crm</strong>
         </span>
       </div>
       <Menu

@@ -7,9 +7,9 @@ WORKDIR /app
 ENV NODE_OPTIONS=--dns-result-order=ipv4first
 
 # Backend URL baked into the build (browser talks to backend directly).
-# Override with: --build-arg VITE_BACKEND_SERVER=http://your-host:8888/
-ARG VITE_BACKEND_SERVER=http://localhost:8888/
-ARG VITE_FILE_BASE_URL=http://localhost:8888/
+# Override with: --build-arg VITE_BACKEND_SERVER=http://your-host:8000/
+ARG VITE_BACKEND_SERVER=http://localhost:8000/
+ARG VITE_FILE_BASE_URL=http://localhost:8000/
 
 COPY package*.json ./
 # Resilient install for flaky networks / slow mirrors

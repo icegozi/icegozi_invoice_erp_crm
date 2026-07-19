@@ -4,7 +4,7 @@ const SettingsLayout = ({ children }) => {
   return (
     <Col className="gutter-row" order={0}>
       <div className="whiteBox shadow" style={{ minHeight: '480px' }}>
-        <div className="pad40">{children}</div>
+        <div className="settingsContent">{children}</div>
       </div>
     </Col>
   );
@@ -35,8 +35,8 @@ const RightMenu = ({ children, pageTitle }) => {
       className="gutter-row"
       xs={{ span: 24 }}
       sm={{ span: 24 }}
-      md={{ span: 7 }}
-      lg={{ span: 6 }}
+      md={{ span: 8 }}
+      lg={{ span: 7 }}
       order={1}
     >
       <TopCard pageTitle={pageTitle} />
@@ -55,7 +55,7 @@ export default function TabsContent({ content, defaultActiveKey, pageTitle }) {
       key: item.key ? item.key : index + '_' + item.label.replace(/ /g, '_'),
       label: (
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          {item.icon} <span style={{ paddingRight: 30 }}>{item.label}</span>
+          {item.icon} <span className="settingsTabLabel">{item.label}</span>
         </div>
       ),
       children: <SettingsLayout>{item.children}</SettingsLayout>,

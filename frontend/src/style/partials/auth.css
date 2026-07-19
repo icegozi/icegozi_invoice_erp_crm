@@ -39,3 +39,9 @@
 .sideContent * {
   color: #4f5d75 !important;
 }
+
+@media only screen and (max-width: 768px) {
+  .sideContent {
+    padding: 72px 24px 24px !important;
+  }
+}

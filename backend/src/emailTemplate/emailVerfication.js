@@ -1,9 +1,17 @@
+const escapeHtml = (value = '') =>
+  String(value).replace(/[&<>"']/g, (character) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]
+  );
+
 exports.passwordVerfication = ({
   title = 'Reset your Password',
   name = '',
   link = '',
   time = new Date(),
 }) => {
+  title = escapeHtml(title);
+  name = escapeHtml(name);
+  link = escapeHtml(link);
   return `
     <div>
 

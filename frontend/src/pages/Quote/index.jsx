@@ -72,14 +72,19 @@ export default function Quote() {
     {
       title: translate('Status'),
       dataIndex: 'status',
+      render: (status) => {
+        if (!status) return '—';
+        const { color } = tagColor(status);
+        return <Tag color={color}>{translate(status)}</Tag>;
+      },
     },
   ];
 
   const Labels = {
-    PANEL_TITLE: translate('proforma invoice'),
-    DATATABLE_TITLE: translate('proforma invoice_list'),
-    ADD_NEW_ENTITY: translate('add_new_proforma invoice'),
-    ENTITY_NAME: translate('proforma invoice'),
+    PANEL_TITLE: translate('proforma_invoice'),
+    DATATABLE_TITLE: translate('proforma_invoice_list'),
+    ADD_NEW_ENTITY: translate('add_new_proforma_invoice'),
+    ENTITY_NAME: translate('proforma_invoice'),
   };
 
   const configPage = {

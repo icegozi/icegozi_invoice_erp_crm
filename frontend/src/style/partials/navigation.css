@@ -10,12 +10,42 @@
   border-right: 1px solid #edf0f5;
 }
 
-.logo {
-  height: 45px;
-  margin: 15px 15px 30px 30px;
+.brandLogo {
+  height: 56px;
+  margin: 16px 16px 28px 20px;
+  padding: 8px;
   display: flex;
-  justify-content: space-evenly;
-  width: 160px;
+  align-items: center;
+  gap: 10px;
+  width: 216px;
+}
+
+.brandLogoMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  color: #fff;
+  background: linear-gradient(135deg, #2563eb, #0f766e);
+  box-shadow: 0 6px 12px rgba(37, 99, 235, 0.24);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+}
+
+.brandLogoName {
+  color: #1640d6;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.brandLogoName strong {
+  color: #0f766e;
+  font-weight: 800;
 }
 
 .sidebar-wraper {

@@ -7,7 +7,7 @@ const About = () => {
   return (
     <Result
       status="info"
-      title={'InvoiceCRM'}
+      title={'ic_goz_crm'}
       subTitle={'Ứng  dụng CSDL MongoDB vào bài toán quản lý khách hàng và hóa đơn. '}
       extra={
         <>

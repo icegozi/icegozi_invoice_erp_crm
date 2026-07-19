@@ -1,6 +1,5 @@
 const { passwordVerfication } = require('@/emailTemplate/emailVerfication');
-
-const { Resend } = require('resend');
+const { sendMail: sendToMailpit } = require('@/handlers/mailHandler/mailer');
 
 const sendMail = async ({
   email,
@@ -11,16 +10,12 @@ const sendMail = async ({
   type = 'emailVerfication',
   emailToken,
 }) => {
-  const resend = new Resend(process.env.RESEND_API);
-
-  const { data } = await resend.emails.send({
-    from: invoice_app_email,
+  return sendToMailpit({
+    from: process.env.MAIL_FROM || invoice_app_email || 'noreply@invoicecrm.test',
     to: email,
     subject,
     html: passwordVerfication({ name, link }),
   });
-
-  return data;
 };
 
 module.exports = sendMail;
