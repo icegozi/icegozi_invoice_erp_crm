@@ -1,4 +1,4 @@
-# ic_goz_crm
+# Invoice ERP/CRM
 
 `ic_goz_crm` là hệ thống quản lý quan hệ khách hàng và nghiệp vụ lập chứng từ cho doanh nghiệp nhỏ: khách hàng, hóa đơn, hóa đơn tạm tính, thanh toán, thuế và cài đặt doanh nghiệp. Tài liệu này là đặc tả triển khai và vận hành cho phiên bản hiện tại.
 
@@ -65,7 +65,7 @@ Quy ước API, model và cấu trúc backend được mô tả thêm trong [CLA
 - **Email:** Mailpit chỉ dùng cho phát triển/kiểm thử. Muốn gửi thư thật phải cấu hình SMTP hợp lệ.
 - **Tương thích:** mã trạng thái và endpoint hiện có được giữ nguyên; việc dịch chỉ thay đổi nội dung hiển thị.
 
-## 5. Khởi chạy bằng Docker
+## Bắt đầu nhanh
 
 ### Điều kiện
 
@@ -76,7 +76,7 @@ Quy ước API, model và cấu trúc backend được mô tả thêm trong [CLA
 ```bash
 cp .env.example .env
 # Bắt buộc đổi JWT_SECRET trước khi đưa ra môi trường thật
-docker compose up -d --build
+make up
 ```
 
 Lần chạy đầu, backend chờ MongoDB sẵn sàng rồi seed dữ liệu và tài khoản quản trị mặc định.
@@ -93,13 +93,17 @@ Tài khoản ban đầu: `admin@admin.com` / `admin123`. Chỉ dùng cho môi tr
 Các lệnh vận hành thường dùng:
 
 ```bash
-docker compose logs -f backend
-docker compose ps
-docker compose down
-docker compose down -v  # xóa cả dữ liệu MongoDB, chỉ dùng khi chủ động làm mới
+make status             # trạng thái các service
+make health             # kiểm tra API health
+make logs-backend       # theo dõi log backend
+make rebuild-backend    # build và thay backend đang chạy
+make rebuild-frontend   # build và thay frontend đang chạy
+make down               # dừng và gỡ container
 ```
 
-## 6. Cấu hình
+> `make destroy` xóa cả Docker volumes, bao gồm dữ liệu MongoDB. Chỉ dùng khi chủ động làm mới dữ liệu.
+
+## Cấu hình
 
 Tạo file `.env` ở thư mục gốc từ `.env.example`. Không đưa file chứa bí mật vào Git.
 
@@ -138,25 +142,29 @@ MAIL_FROM="ic_goz_crm <billing@example.com>"
 
 Không dùng thông tin SMTP thật trong môi trường local hoặc file `.env` được commit.
 
-## 7. Chạy thủ công
+## Phát triển cục bộ
 
 Yêu cầu: Node.js 20.9.0+, npm 10.2.4+, một MongoDB đang chạy và (nếu cần email thử nghiệm) Mailpit.
 
 ```bash
 cp .env.example .env
 
-cd backend
 npm install
+make mongo-up
 npm run setup
-npm run dev
 ```
 
-Mở terminal khác:
+Chạy backend và Vite ở hai terminal riêng:
 
 ```bash
-cd frontend
-npm install
-npm run dev
+make dev-backend
+make vite
+```
+
+Hoặc dùng một lệnh để chạy cả hai:
+
+```bash
+make dev
 ```
 
 Khi backend chạy bên ngoài Docker nhưng Mailpit chạy cục bộ, đặt `SMTP_HOST=localhost`. Khi cả hai chạy trong Docker Compose, giữ `SMTP_HOST=mailpit`.
@@ -170,7 +178,15 @@ Khi backend chạy bên ngoài Docker nhưng Mailpit chạy cục bộ, đặt `
 5. Lưu, tải PDF hoặc dùng chức năng gửi email. Với cấu hình mặc định, kiểm tra thư tại Mailpit.
 6. Khi nhận tiền, ghi nhận thanh toán để cập nhật trạng thái chứng từ và tạo biên nhận.
 
-## 9. Kiểm thử và tiêu chí nghiệm thu
+## Kiểm thử
+
+```bash
+make test       # unit/contract tests
+make check      # test và build frontend production
+make lint       # ESLint frontend trong container tạm
+```
+
+### Kiểm tra thủ công
 
 Trước khi bàn giao hoặc triển khai, xác nhận tối thiểu:
 
@@ -183,10 +199,14 @@ Trước khi bàn giao hoặc triển khai, xác nhận tối thiểu:
 - [ ] Frontend build thành công:
 
 ```bash
-cd frontend && npm run build
+npm run build
 ```
 
-## 10. Triển khai và bảo mật
+### Tải PDF
+
+Endpoint PDF yêu cầu Bearer token. Không mở trực tiếp URL `/download/...` trên thanh địa chỉ. Hãy dùng nút **Download** trong giao diện sau khi đăng nhập; frontend sẽ gửi token và tải file PDF an toàn.
+
+## Triển khai và bảo mật
 
 - Dùng `JWT_SECRET` ngẫu nhiên, dài và khác nhau giữa development/staging/production.
 - Đặt frontend sau HTTPS, giới hạn CORS theo domain thật và không mở MongoDB công khai.
@@ -195,11 +215,17 @@ cd frontend && npm run build
 - Sao lưu MongoDB định kỳ, kiểm thử khôi phục và cập nhật dependencies theo lịch.
 - Tạo tài khoản quản trị riêng cho từng người vận hành; không dùng chung tài khoản seed.
 
-## 11. Cấu trúc mã nguồn
+## Cấu trúc mã nguồn
 
 ```text
 backend/       Express API, model Mongoose, PDF và gửi email
 frontend/      React SPA, i18n, Redux và giao diện Ant Design
+package.json   Manifest Node.js duy nhất cho toàn bộ dự án
+Makefile       Lệnh phát triển, kiểm thử và Docker
 docker-compose.yml
 .env.example   Mẫu cấu hình môi trường
 ```
+
+## Giấy phép
+
+Dự án sử dụng giấy phép được nêu trong [LICENSE](LICENSE).

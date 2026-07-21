@@ -32,7 +32,7 @@ const create = async (req, res) => {
   body['taxTotal'] = taxTotal;
   body['total'] = total;
   body['items'] = items;
-  body['createdBy'] = req.admin._id;
+  body['createdBy'] = req.authUserId || req.admin._id || req.admin.id;
 
   // Creating a new document in the collection
   const result = await new Model(body).save();

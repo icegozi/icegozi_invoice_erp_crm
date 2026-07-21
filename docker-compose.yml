@@ -41,7 +41,8 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: invoice-backend
     restart: unless-stopped
     depends_on:
@@ -76,7 +77,8 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: .
+      dockerfile: frontend/Dockerfile
       args:
         # Baked into the build (browser talks to backend directly)
         VITE_BACKEND_SERVER: "${VITE_BACKEND_SERVER:-http://localhost:8000/}"

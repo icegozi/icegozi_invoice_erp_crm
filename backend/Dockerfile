@@ -22,11 +22,11 @@ RUN npm config set fetch-retries 5 \
   && npm config set fetch-retry-maxtimeout 120000 \
   && npm install --omit=dev --no-audit --no-fund
 
-COPY . .
+COPY backend ./backend
 
-RUN mkdir -p src/public/download src/public/uploads
+RUN mkdir -p backend/src/public/download backend/src/public/uploads
 
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 

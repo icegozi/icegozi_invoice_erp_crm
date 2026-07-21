@@ -148,7 +148,9 @@ export default function ReadItem({ config, selectedItem }) {
         title={`${ENTITY_NAME} # ${currentErp.number}/${currentErp.year || ''}`}
         ghost={false}
         tags={[
-          <span key="status">{currentErp.status && translate(currentErp.status)}</span>,
+          <span key="status" style={{ marginRight: 8 }}>
+            {currentErp.status && translate(currentErp.status)}
+          </span>,
           currentErp.paymentStatus && (
             <span key="paymentStatus">
               {currentErp.paymentStatus && translate(currentErp.paymentStatus)}

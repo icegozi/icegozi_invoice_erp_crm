@@ -1,10 +1,11 @@
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Read the single shared .env from the repo root (one folder up from frontend/)
-const envDir = path.resolve(__dirname, '..');
+const frontendDir = path.dirname(fileURLToPath(import.meta.url));
+const envDir = path.resolve(frontendDir, '..');
 
 export default ({ mode }) => {
   process.env = { ...process.env, ...loadEnv(mode, envDir) };
@@ -14,25 +15,19 @@ export default ({ mode }) => {
       ? process.env.VITE_BACKEND_SERVER
       : 'http://localhost:8000/';
 
-  const config = {
+  return defineConfig({
     plugins: [react()],
     envDir,
     resolve: {
       base: '/',
-      alias: {
-        '@': path.resolve(__dirname, 'src'),
-      },
+      alias: { '@': path.resolve(frontendDir, 'src') },
     },
     server: {
       port: 3000,
+      strictPort: true,
       proxy: {
-        '/api': {
-          target: proxy_url,
-          changeOrigin: true,
-          secure: false,
-        },
+        '/api': { target: proxy_url, changeOrigin: true, secure: false },
       },
     },
-  };
-  return defineConfig(config);
+  });
 };

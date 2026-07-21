@@ -57,6 +57,9 @@ const isValidAuthToken = async (req, res, next, { userModel, jwtSecret = 'JWT_SE
     else {
       const reqUserName = userModel.toLowerCase();
       req[reqUserName] = user;
+      // Keep the verified subject separately from the hydrated user document.
+      // Controllers use this stable identifier for ownership fields.
+      req.authUserId = verified.id;
       next();
     }
   } catch (error) {

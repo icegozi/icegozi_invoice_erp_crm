@@ -1,4 +1,4 @@
-const rootDir = require('path').resolve(__dirname, '..', '..', '..');
+const rootDir = require('path').resolve(__dirname, '..', '..');
 require('dotenv').config({ path: require('path').join(rootDir, '.env') });
 require('dotenv').config({ path: require('path').join(rootDir, '.env.local') });
 const { globSync } = require('glob');
@@ -41,7 +41,7 @@ async function setupApp() {
 
     const settingFiles = [];
 
-    const settingsFiles = globSync('./src/setup/defaultSettings/**/*.json');
+    const settingsFiles = globSync(require('path').join(rootDir, 'src/setup/defaultSettings/**/*.json'));
 
     for (const filePath of settingsFiles) {
       const file = JSON.parse(fs.readFileSync(filePath, 'utf-8'));

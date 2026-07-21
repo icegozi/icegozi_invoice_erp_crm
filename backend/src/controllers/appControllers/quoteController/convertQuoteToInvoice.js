@@ -50,7 +50,7 @@ const convertQuoteToInvoice = async (req, res) => {
   const total = calculate.add(subTotal, taxTotal);
 
   const invoiceData = {
-    createdBy: req.admin._id,
+    createdBy: req.authUserId || req.admin._id || req.admin.id,
     organizationId: req.admin.organizationId,
     number: 0,
     year,

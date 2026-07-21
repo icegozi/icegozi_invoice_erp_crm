@@ -7,6 +7,15 @@ const schema = require('./schemaValidate');
 
 const create = async (req, res) => {
   let body = req.body;
+  const createdBy = req.authUserId || req.admin?._id || req.admin?.id;
+
+  if (!createdBy) {
+    return res.status(401).json({
+      success: false,
+      result: null,
+      message: 'Authenticated user identity is missing.',
+    });
+  }
 
   const { error, value } = schema.validate(body);
   if (error) {
@@ -44,7 +53,9 @@ const create = async (req, res) => {
   let paymentStatus = calculate.sub(total, discount) === 0 ? 'paid' : 'unpaid';
 
   body['paymentStatus'] = paymentStatus;
-  body['createdBy'] = req.admin._id;
+  // `req.admin` may be a Mongoose document or a serialized auth user. Support
+  // both forms so ownership is always persisted for authenticated requests.
+  body['createdBy'] = createdBy;
   body['organizationId'] = req.admin.organizationId;
 
   const Setting = mongoose.model('Setting');

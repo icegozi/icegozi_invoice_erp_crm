@@ -1,9 +1,10 @@
-const { basename, extname } = require('path');
+const { basename, extname, join } = require('path');
 const { globSync } = require('glob');
 
-const appModelsFiles = globSync('./src/models/appModels/**/*.js');
+const modelsDirectory = join(__dirname, '..');
+const appModelsFiles = globSync(join(modelsDirectory, 'appModels', '**/*.js'));
 
-const pattern = './src/models/**/*.js';
+const pattern = join(modelsDirectory, '**/*.js');
 
 const modelsFiles = globSync(pattern).map((filePath) => {
   const fileNameWithExtension = basename(filePath);

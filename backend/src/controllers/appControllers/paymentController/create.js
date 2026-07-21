@@ -46,7 +46,7 @@ const create = async (req, res) => {
           ...req.body,
           amount,
           client: invoice.client._id || invoice.client,
-          createdBy: req.admin._id,
+          createdBy: req.authUserId || req.admin._id || req.admin.id,
           organizationId: req.admin.organizationId,
         }],
         { session }
