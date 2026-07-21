@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import useLanguage from '@/locale/useLanguage';
 import UpdatePayment from './UpdatePayment';
 import { tagColor } from '@/utils/statusTagColor';
+import calculate from '@/utils/calculate';
 
 export default function Payment({ config, currentItem }) {
   const translate = useLanguage();
@@ -113,9 +114,18 @@ export default function Payment({ config, currentItem }) {
                 currency_code: currentErp.currency,
               })}
             </Descriptions.Item>
-            <Descriptions.Item label="Balance">
+            <Descriptions.Item label={translate('total_paid')}>
               {money.moneyFormatter({
                 amount: currentErp.credit,
+                currency_code: currentErp.currency,
+              })}
+            </Descriptions.Item>
+            <Descriptions.Item label={translate('total_remaining')}>
+              {money.moneyFormatter({
+                amount: calculate.sub(
+                  calculate.sub(currentErp.total, currentErp.discount),
+                  currentErp.credit
+                ),
                 currency_code: currentErp.currency,
               })}
             </Descriptions.Item>

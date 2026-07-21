@@ -65,21 +65,21 @@ Quy ước API, model và cấu trúc backend được mô tả thêm trong [CLA
 - **Email:** Mailpit chỉ dùng cho phát triển/kiểm thử. Muốn gửi thư thật phải cấu hình SMTP hợp lệ.
 - **Tương thích:** mã trạng thái và endpoint hiện có được giữ nguyên; việc dịch chỉ thay đổi nội dung hiển thị.
 
-## Bắt đầu nhanh
+## Cài đặt và chạy ứng dụng
 
-### Điều kiện
+Có hai cách chạy ứng dụng. Dùng Docker là lựa chọn đơn giản nhất vì MongoDB, Mailpit, backend và frontend được khởi động cùng nhau. Chạy thủ công phù hợp khi phát triển giao diện/API với hot reload.
 
-- Docker Engine 20+ và Docker Compose v2.
+### Cách 1 — Docker Compose
 
-### Cài đặt
+**Yêu cầu:** Docker Engine 20+ và Docker Compose v2.
 
 ```bash
 cp .env.example .env
-# Bắt buộc đổi JWT_SECRET trước khi đưa ra môi trường thật
+# Đổi JWT_SECRET thành chuỗi ngẫu nhiên trước khi triển khai thật
 make up
 ```
 
-Lần chạy đầu, backend chờ MongoDB sẵn sàng rồi seed dữ liệu và tài khoản quản trị mặc định.
+Lần chạy đầu, backend chờ MongoDB sẵn sàng rồi tự seed dữ liệu và tài khoản quản trị mặc định. Mở ứng dụng tại `http://localhost:3000`.
 
 | Dịch vụ      | Địa chỉ mặc định          | Mục đích                |
 | ------------ | ------------------------- | ----------------------- |
@@ -98,10 +98,13 @@ make health             # kiểm tra API health
 make logs-backend       # theo dõi log backend
 make rebuild-backend    # build và thay backend đang chạy
 make rebuild-frontend   # build và thay frontend đang chạy
+make reconcile-payments # đồng bộ số đã thanh toán từ các phiếu payment
 make down               # dừng và gỡ container
 ```
 
 > `make destroy` xóa cả Docker volumes, bao gồm dữ liệu MongoDB. Chỉ dùng khi chủ động làm mới dữ liệu.
+
+Khi thay đổi mã nguồn, dùng `make rebuild-frontend` hoặc `make rebuild-backend` cho từng dịch vụ; dùng `make up` khi cần build và khởi động toàn bộ stack.
 
 ## Cấu hình
 
@@ -142,32 +145,50 @@ MAIL_FROM="ic_goz_crm <billing@example.com>"
 
 Không dùng thông tin SMTP thật trong môi trường local hoặc file `.env` được commit.
 
-## Phát triển cục bộ
+### Cách 2 — Chạy thủ công (hot reload)
 
-Yêu cầu: Node.js 20.9.0+, npm 10.2.4+, một MongoDB đang chạy và (nếu cần email thử nghiệm) Mailpit.
+**Yêu cầu:** Node.js 20.9.0+, npm 10.2.4+, MongoDB và (nếu cần email thử nghiệm) Mailpit.
+
+1. Tạo cấu hình local và cài package riêng cho backend/frontend:
 
 ```bash
 cp .env.example .env
 
-npm install
-make mongo-up
-npm run setup
+make install
 ```
 
-Chạy backend và Vite ở hai terminal riêng:
+2. Khởi động dịch vụ phụ trợ. Cách gọn nhất là chỉ dùng Docker cho MongoDB và Mailpit:
 
 ```bash
-make dev-backend
-make vite
+docker compose up -d mongo mailpit
 ```
 
-Hoặc dùng một lệnh để chạy cả hai:
+Trong `.env`, giữ `DATABASE=mongodb://localhost:27017/invoice` và đặt `SMTP_HOST=localhost`, vì backend đang chạy trên máy host.
+
+3. Với database mới, seed dữ liệu ban đầu một lần:
+
+```bash
+npm --prefix backend run setup
+```
+
+4. Chạy backend và Vite cùng lúc:
 
 ```bash
 make dev
 ```
 
-Khi backend chạy bên ngoài Docker nhưng Mailpit chạy cục bộ, đặt `SMTP_HOST=localhost`. Khi cả hai chạy trong Docker Compose, giữ `SMTP_HOST=mailpit`.
+Hoặc mở hai terminal riêng:
+
+```bash
+make dev-backend    # API: http://localhost:8000
+make dev-frontend   # Vite: http://localhost:3000
+```
+
+Để dừng hot reload và MongoDB khởi động qua Makefile, dùng `make stop-dev`. Nếu đã khởi động Mailpit thủ công bằng Compose, dừng bằng `docker compose stop mailpit`.
+
+### Đăng nhập lần đầu
+
+Với database mới, đăng nhập bằng `admin@admin.com` / `admin123`, sau đó đổi mật khẩu ngay.
 
 ## 8. Quy trình sử dụng chuẩn
 
@@ -199,7 +220,7 @@ Trước khi bàn giao hoặc triển khai, xác nhận tối thiểu:
 - [ ] Frontend build thành công:
 
 ```bash
-npm run build
+make build-frontend
 ```
 
 ### Tải PDF
@@ -220,7 +241,8 @@ Endpoint PDF yêu cầu Bearer token. Không mở trực tiếp URL `/download/.
 ```text
 backend/       Express API, model Mongoose, PDF và gửi email
 frontend/      React SPA, i18n, Redux và giao diện Ant Design
-package.json   Manifest Node.js duy nhất cho toàn bộ dự án
+backend/package.json    Dependencies và scripts cho API
+frontend/package.json   Dependencies và scripts cho giao diện
 Makefile       Lệnh phát triển, kiểm thử và Docker
 docker-compose.yml
 .env.example   Mẫu cấu hình môi trường

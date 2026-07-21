@@ -19,6 +19,7 @@ import { generate as uniqueId } from 'shortid';
 import { selectCurrentItem } from '@/redux/erp/selectors';
 
 import downloadPdf from '@/utils/downloadPdf';
+import calculate from '@/utils/calculate';
 import { useMoney } from '@/settings';
 
 import useMail from '@/hooks/useMail';
@@ -48,6 +49,7 @@ export default function ReadItem({ config, selectedItem }) {
     taxTotal: 0,
     taxRate: 0,
     total: 0,
+    discount: 0,
     credit: 0,
     number: 0,
     year: 0,
@@ -225,7 +227,10 @@ export default function ReadItem({ config, selectedItem }) {
           <Col className="gutter-row" span={12}>
             <p>
               {moneyFormatter({
-                amount: currentErp.total - currentErp.credit,
+                amount: calculate.sub(
+                  calculate.sub(currentErp.total, currentErp.discount),
+                  currentErp.credit
+                ),
                 currency_code: currentErp.currency,
               })}
             </p>

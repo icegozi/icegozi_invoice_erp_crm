@@ -73,7 +73,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - uploads-data:/app/src/public/uploads
+      - uploads-data:/app/backend/src/public/uploads
 
   frontend:
     build:

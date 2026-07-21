@@ -387,6 +387,8 @@ const lang = {
   payment_status: 'Payment Status',
   discount: 'Discount',
   amount: 'Amount',
+  amount_exceeds_remaining: 'Amount exceeds the remaining balance',
+  please_correct_form: 'Please correct the highlighted fields',
   reference: 'Reference',
   add_payment_mode: 'Add Payment Mode',
   quote_list: 'Quote List',

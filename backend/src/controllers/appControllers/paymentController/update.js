@@ -2,9 +2,8 @@ const mongoose = require('mongoose');
 
 const Model = mongoose.model('Payment');
 const Invoice = mongoose.model('Invoice');
-const custom = require('@/controllers/pdfController');
-
 const { calculate } = require('@/helpers');
+const { activePaymentTotal, paymentStatusFor } = require('./paymentBalance');
 
 const update = async (req, res) => {
   if (req.body.amount === 0) {
@@ -23,7 +22,7 @@ const update = async (req, res) => {
   const updates = {
     number: req.body.number,
     date: req.body.date,
-    amount: req.body.amount,
+    amount: currentAmount,
     paymentMode: req.body.paymentMode,
     ref: req.body.ref,
     description: req.body.description,
@@ -38,25 +37,21 @@ const update = async (req, res) => {
       if (!previousPayment) {
         const error = new Error('Payment not found.'); error.status = 404; throw error;
       }
-      const changedAmount = calculate.sub(currentAmount, previousPayment.amount);
-      const invoice = await Invoice.findOneAndUpdate(
-        {
-          _id: previousPayment.invoice,
-          removed: false,
-          $expr: { $and: [
-            { $gte: [{ $add: ['$credit', changedAmount] }, 0] },
-            { $lte: [{ $add: ['$credit', changedAmount] }, { $subtract: ['$total', '$discount'] }] },
-          ] },
-        },
-        { $inc: { credit: changedAmount } },
-        { new: true, session }
-      );
+      const invoice = await Invoice.findOne({ _id: previousPayment.invoice, removed: false }).session(session);
       if (!invoice) {
+        const error = new Error('Invoice not found.'); error.status = 404; throw error;
+      }
+      const otherPaymentsTotal = await activePaymentTotal(invoice._id, session, previousPayment._id);
+      const nextCredit = calculate.add(otherPaymentsTotal, currentAmount);
+      if (nextCredit > calculate.sub(invoice.total, invoice.discount)) {
         const error = new Error('Payment amount exceeds the remaining balance.'); error.status = 400; throw error;
       }
-      const paymentStatus = calculate.sub(invoice.total, invoice.discount) === invoice.credit ? 'paid' : invoice.credit > 0 ? 'partially' : 'unpaid';
       result = await Model.findOneAndUpdate({ _id: previousPayment._id }, { $set: updates }, { new: true, session });
-      await Invoice.updateOne({ _id: invoice._id }, { $set: { paymentStatus } }, { session });
+      await Invoice.updateOne(
+        { _id: invoice._id },
+        { $set: { credit: nextCredit, paymentStatus: paymentStatusFor(invoice, nextCredit) } },
+        { session }
+      );
     });
   } catch (error) {
     return res.status(error.status || 500).json({ success: false, result: null, message: error.message });

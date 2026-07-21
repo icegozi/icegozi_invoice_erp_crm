@@ -1,6 +1,6 @@
 FROM node:20.9.0-slim
 
-WORKDIR /app
+WORKDIR /app/backend
 
 ENV NODE_OPTIONS=--dns-result-order=ipv4first
 
@@ -15,16 +15,16 @@ RUN apt-get update \
      libxdamage1 libxfixes3 libxrandr2 libxkbcommon0 ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-COPY package*.json ./
+COPY backend/package*.json ./
 
 RUN npm config set fetch-retries 5 \
   && npm config set fetch-retry-mintimeout 20000 \
   && npm config set fetch-retry-maxtimeout 120000 \
-  && npm install --omit=dev --no-audit --no-fund
+  && npm ci --omit=dev --no-audit --no-fund
 
-COPY backend ./backend
+COPY backend ./
 
-RUN mkdir -p backend/src/public/download backend/src/public/uploads
+RUN mkdir -p src/public/download src/public/uploads
 
 COPY backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 

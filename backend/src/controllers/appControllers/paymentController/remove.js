@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const Model = mongoose.model('Payment');
 const Invoice = mongoose.model('Invoice');
-const { calculate } = require('@/helpers');
+const { activePaymentTotal, paymentStatusFor } = require('./paymentBalance');
 
 const remove = async (req, res) => {
   const session = await mongoose.startSession();
@@ -14,19 +14,10 @@ const remove = async (req, res) => {
       const invoice = await Invoice.findOne({ _id: previousPayment.invoice, removed: false }).session(session);
       if (!invoice) { const error = new Error('Invoice not found.'); error.status = 404; throw error; }
 
-      // Derive the balance from active payments instead of decrementing a
-      // potentially stale denormalized `credit` value.
-      const remainingPayments = await Model.find({
-        _id: { $ne: previousPayment._id },
-        invoice: invoice._id,
-        removed: false,
-      }).session(session).select('amount');
-      const credit = remainingPayments.reduce((sum, payment) => calculate.add(sum, payment.amount), 0);
-      const due = calculate.sub(invoice.total, invoice.discount);
-      const paymentStatus = credit === due ? 'paid' : credit > 0 ? 'partially' : 'unpaid';
+      const credit = await activePaymentTotal(invoice._id, session, previousPayment._id);
       await Invoice.updateOne(
         { _id: invoice._id },
-        { $pull: { payment: previousPayment._id }, $set: { credit, paymentStatus } },
+        { $pull: { payment: previousPayment._id }, $set: { credit, paymentStatus: paymentStatusFor(invoice, credit) } },
         { session }
       );
       result = await Model.findOneAndUpdate({ _id: previousPayment._id }, { $set: { removed: true } }, { new: true, session });

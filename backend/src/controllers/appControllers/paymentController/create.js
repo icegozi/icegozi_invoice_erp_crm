@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const Model = mongoose.model('Payment');
 const Invoice = mongoose.model('Invoice');
 const { calculate } = require('@/helpers');
+const { activePaymentTotal, paymentStatusFor } = require('./paymentBalance');
 
 const create = async (req, res) => {
   const amount = Number(req.body.amount);
@@ -18,29 +19,24 @@ const create = async (req, res) => {
   let result;
   try {
     await session.withTransaction(async () => {
-      // The $expr check and increment happen in one database operation, preventing overpayment.
-      const invoice = await Invoice.findOneAndUpdate(
-        {
-          _id: req.body.invoice,
-          removed: false,
-          $expr: { $lte: [{ $add: ['$credit', amount] }, { $subtract: ['$total', '$discount'] }] },
-        },
-        { $inc: { credit: amount } },
-        { new: true, session, runValidators: true }
-      ).exec();
+      const invoice = await Invoice.findOne({ _id: req.body.invoice, removed: false }).session(session);
 
       if (!invoice) {
-        const error = new Error('Invoice not found or payment exceeds the remaining balance.');
+        const error = new Error('Invoice not found.');
         error.status = 400;
         throw error;
       }
 
-      const paymentStatus =
-        calculate.sub(invoice.total, invoice.discount) === invoice.credit
-          ? 'paid'
-          : invoice.credit > 0
-          ? 'partially'
-          : 'unpaid';
+      // Payments are the source of truth; credit is only a denormalized display value.
+      const currentCredit = await activePaymentTotal(invoice._id, session);
+      const due = calculate.sub(invoice.total, invoice.discount);
+      const nextCredit = calculate.add(currentCredit, amount);
+      if (nextCredit > due) {
+        const error = new Error('Payment amount exceeds the remaining balance.');
+        error.status = 400;
+        throw error;
+      }
+
       const [payment] = await Model.create(
         [{
           ...req.body,
@@ -55,7 +51,10 @@ const create = async (req, res) => {
       await payment.save({ session });
       await Invoice.updateOne(
         { _id: invoice._id },
-        { $push: { payment: payment._id }, $set: { paymentStatus } },
+        {
+          $push: { payment: payment._id },
+          $set: { credit: nextCredit, paymentStatus: paymentStatusFor(invoice, nextCredit) },
+        },
         { session, runValidators: true }
       );
       result = payment;

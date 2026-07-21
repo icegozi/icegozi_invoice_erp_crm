@@ -163,9 +163,9 @@ mongo: ## Open a mongosh shell on the invoice database
 # =====================================================================
 #  Backend / Node tasks (run inside the live backend container)
 # =====================================================================
-container-install: ## Reinstall the unified root Node dependencies in backend container
+container-install: ## Reinstall backend dependencies in the live container
 	@docker exec -t --user 0 $(BACKEND) npm install
-	@echo "Root dependencies installed in backend container"
+	@echo "Backend dependencies installed in the container"
 
 setup: ## Seed initial admin + default settings (default login admin123)
 	@docker exec -t $(BACKEND) npm run setup
@@ -179,6 +179,9 @@ upgrade: ## Run the backend upgrade/migration script
 	@docker exec -t $(BACKEND) npm run upgrade
 	@echo "Upgrade script finished"
 
+reconcile-payments: ## Recalculate invoice balances from active payments
+	@docker exec -t $(BACKEND) npm run reconcile:payments
+
 # Generate a new Mongoose model on the HOST source tree (writes to ./backend).
 # A throwaway node container mounts the repository root so no Node install is needed locally.
 # MODEL (not NAME) is used on purpose — NAME is often already set in the shell env.
@@ -190,23 +193,24 @@ make-model: ## Generate a new model (usage: make make-model MODEL=Product FIELDS
 		echo "Usage: make make-model MODEL=Product FIELDS=\"name:string:required price:number\" [CONTROLLER=1]"; \
 		exit 1; \
 	fi
-	@docker run --rm --user $$(id -u):$$(id -g) -v "$(PWD):/app" -w /app $(NODE_IMAGE) \
-		node backend/src/cli/makeModel.js $(MODEL) $(FIELDS) $(if $(CONTROLLER),--controller,)
+	@docker run --rm --user $$(id -u):$$(id -g) -v "$(PWD):/app" -w /app/backend $(NODE_IMAGE) \
+		node src/cli/makeModel.js $(MODEL) $(FIELDS) $(if $(CONTROLLER),--controller,)
 	@echo "Run 'make restart' (or rebuild) so the backend picks up the new model"
 
 # =====================================================================
 #  Local development (host, hot-reload — needs Node + MongoDB)
 # =====================================================================
-install: ## Install all Node dependencies on the host
-	@npm install
-	@echo "Dependencies installed"
+install: ## Install backend and frontend dependencies
+	@npm --prefix backend install
+	@npm --prefix frontend install
+	@echo "Backend and frontend dependencies installed"
 
-test: ## Run the complete Node test suite
-	@npm test
+test: ## Run backend tests
+	@npm --prefix backend test
 
-check: ## Run tests and production frontend build
-	@npm test
-	@npm run build
+check: ## Run backend tests and build frontend
+	@npm --prefix backend test
+	@npm --prefix frontend run build
 	@echo "Tests and frontend build passed"
 
 mongo-up: ## Start only the MongoDB container (DB for host dev servers)
@@ -214,34 +218,34 @@ mongo-up: ## Start only the MongoDB container (DB for host dev servers)
 	@echo "MongoDB running on :27017 (db 'invoice')"
 
 dev: ## Run backend + frontend dev servers with hot reload (Ctrl+C stops both)
-	@if [ ! -x node_modules/.bin/nodemon ] || [ ! -x node_modules/.bin/vite ]; then \
+	@if [ ! -x backend/node_modules/.bin/nodemon ] || [ ! -x frontend/node_modules/.bin/vite ]; then \
 		echo "Dependencies missing — run 'make install' first."; exit 1; fi
 	-@$(COMPOSE) stop backend frontend >/dev/null 2>&1 || true
 	@$(COMPOSE) up --detach mongo
 	@echo "🚀 Backend :8000 (nodemon) + Frontend :3000 (vite). Press Ctrl+C to stop both."
 	@trap 'kill 0' INT TERM EXIT; \
-		npm run dev:backend & \
-		npm run dev:frontend & \
+		npm --prefix backend run dev & \
+		npm --prefix frontend run dev & \
 		wait
 
 dev-backend: ## Run only the backend dev server (nodemon, :8000)
-	@npm run dev:backend
+	@npm --prefix backend run dev
 
 dev-frontend: ## Run only the frontend dev server (vite, :3000)
 	@$(COMPOSE) stop frontend >/dev/null 2>&1 || true
-	@npm run dev:frontend
+	@npm --prefix frontend run dev
 
 vite: dev-frontend ## Alias: run Vite development server
 
-build-frontend: ## Build the frontend for production (npm run build → frontend/dist)
-	@npm run build
+build-frontend: ## Build frontend production files (frontend/dist)
+	@npm --prefix frontend run build
 	@echo "Frontend built → frontend/dist"
 
 stop-dev: ## Stop host dev servers + the mongo-up container
 	# Scoped to THIS project's path so other projects' nodemon/vite are never touched.
 	# The [x] bracket stops pkill from matching its own command line.
-	-@pkill -f "$(CURDIR)/node_modules.*[n]odemon" 2>/dev/null || true
-	-@pkill -f "$(CURDIR)/node_modules.*[v]ite" 2>/dev/null || true
+	-@pkill -f "$(CURDIR)/backend/node_modules.*[n]odemon" 2>/dev/null || true
+	-@pkill -f "$(CURDIR)/frontend/node_modules.*[v]ite" 2>/dev/null || true
 	@$(COMPOSE) stop mongo
 	@echo "Dev servers and mongo stopped"
 
@@ -249,7 +253,7 @@ stop-dev: ## Stop host dev servers + the mongo-up container
 #  Frontend tasks
 # =====================================================================
 lint: ## Run frontend ESLint (in a throwaway node container)
-	@docker run --rm --user $$(id -u):$$(id -g) -v "$(PWD):/app" -w /app $(NODE_IMAGE) \
+	@docker run --rm --user $$(id -u):$$(id -g) -v "$(PWD):/app" -w /app/frontend $(NODE_IMAGE) \
 		sh -c "npm ci --no-audit --no-fund && npm run lint"
 
 rebuild-frontend: ## Rebuild and restart only the frontend container

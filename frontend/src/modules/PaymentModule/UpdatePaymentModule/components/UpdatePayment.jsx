@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Form, Button } from 'antd';
+import { Form, Button, message } from 'antd';
 import dayjs from 'dayjs';
 import { useSelector, useDispatch } from 'react-redux';
 import { erp } from '@/redux/erp/actions';
@@ -69,10 +69,15 @@ export default function UpdatePayment({ config, currentInvoice }) {
     );
   };
 
+  const onSubmitFailed = ({ errorFields }) => {
+    const amountError = errorFields.some((field) => field.name[0] === 'amount');
+    message.error(translate(amountError ? 'amount_exceeds_remaining' : 'please_correct_form'));
+  };
+
   return (
     <>
       <Loading isLoading={isLoading}>
-        <Form form={form} layout="vertical" onFinish={onSubmit}>
+        <Form form={form} layout="vertical" onFinish={onSubmit} onFinishFailed={onSubmitFailed}>
           <PaymentForm maxAmount={maxAmount} />
           <Form.Item>
             <Button type="primary" htmlType="submit">
