@@ -21,7 +21,7 @@ import { selectListItems } from '@/redux/erp/selectors';
 import { useErpContext } from '@/context/erp';
 import { useNavigate } from 'react-router-dom';
 
-import { DOWNLOAD_BASE_URL } from '@/config/serverApiConfig';
+import downloadPdf from '@/utils/downloadPdf';
 
 function AddNewItem({ config }) {
   const navigate = useNavigate();
@@ -91,10 +91,13 @@ export default function DataTable({ config, extra = [] }) {
     navigate(`/${entity}/update/${record._id}`);
   };
   const handleDownload = (record) => {
-    window.open(`${DOWNLOAD_BASE_URL}${entity}/${entity}-${record._id}.pdf`, '_blank');
+    downloadPdf(entity, record);
   };
 
   const handleDelete = (record) => {
+    // Clear the previous delete result before opening another confirmation.
+    // Otherwise `isSuccess` from the prior deletion can close the new modal.
+    dispatch(erp.resetAction({ actionType: 'delete' }));
     dispatch(erp.currentAction({ actionType: 'delete', data: record }));
     modal.open();
   };

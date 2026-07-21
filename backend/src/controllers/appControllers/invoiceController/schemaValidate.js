@@ -21,6 +21,8 @@ const schema = Joi.object({
     )
     .required(),
   taxRate: Joi.alternatives().try(Joi.number(), Joi.string()).required(),
+  currency: Joi.string().required(),
+  discount: Joi.number().min(0).default(0),
 });
 
 module.exports = schema;

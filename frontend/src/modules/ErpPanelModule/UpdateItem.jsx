@@ -142,7 +142,9 @@ export default function UpdateItem({ config, UpdateForm }) {
         title={translate('update')}
         ghost={false}
         tags={[
-          <span key="status">{currentErp.status && translate(currentErp.status)}</span>,
+          <span key="status" style={{ marginRight: 8 }}>
+            {currentErp.status && translate(currentErp.status)}
+          </span>,
           currentErp.paymentStatus && (
             <span key="paymentStatus">
               {currentErp.paymentStatus && translate(currentErp.paymentStatus)}

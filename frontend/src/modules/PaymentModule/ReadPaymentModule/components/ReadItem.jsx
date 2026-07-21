@@ -18,7 +18,8 @@ import { generate as uniqueId } from 'shortid';
 
 import { selectCurrentItem } from '@/redux/erp/selectors';
 
-import { DOWNLOAD_BASE_URL } from '@/config/serverApiConfig';
+import downloadPdf from '@/utils/downloadPdf';
+import calculate from '@/utils/calculate';
 import { useMoney } from '@/settings';
 
 import useMail from '@/hooks/useMail';
@@ -34,6 +35,7 @@ export default function ReadItem({ config, selectedItem }) {
   const navigate = useNavigate();
 
   const { result: currentResult } = useSelector(selectCurrentItem);
+  const invoiceId = currentResult?.invoice?._id || selectedItem?.invoice?._id;
 
   const resetErp = {
     status: '',
@@ -47,6 +49,7 @@ export default function ReadItem({ config, selectedItem }) {
     taxTotal: 0,
     taxRate: 0,
     total: 0,
+    discount: 0,
     credit: 0,
     number: 0,
     year: 0,
@@ -92,10 +95,7 @@ export default function ReadItem({ config, selectedItem }) {
           <Button
             key={`${uniqueId()}`}
             onClick={() => {
-              window.open(
-                `${DOWNLOAD_BASE_URL}${entity}/${entity}-${currentErp._id}.pdf`,
-                '_blank'
-              );
+              downloadPdf(entity, currentErp);
             }}
             icon={<FilePdfOutlined />}
           >
@@ -176,7 +176,13 @@ export default function ReadItem({ config, selectedItem }) {
           <Typography.Title level={5}>{translate('Payment Information')} :</Typography.Title>
         </Col>
         <Col sm={24} md={12} style={{ textAlign: 'right' }}>
-          <Button icon={<ExportOutlined />}>{translate('Show invoice')}</Button>
+          <Button
+            icon={<ExportOutlined />}
+            disabled={!invoiceId}
+            onClick={() => navigate(`/invoice/read/${invoiceId}`)}
+          >
+            {translate('Show invoice')}
+          </Button>
         </Col>
       </Row>
       <div
@@ -221,7 +227,10 @@ export default function ReadItem({ config, selectedItem }) {
           <Col className="gutter-row" span={12}>
             <p>
               {moneyFormatter({
-                amount: currentErp.total - currentErp.credit,
+                amount: calculate.sub(
+                  calculate.sub(currentErp.total, currentErp.discount),
+                  currentErp.credit
+                ),
                 currency_code: currentErp.currency,
               })}
             </p>

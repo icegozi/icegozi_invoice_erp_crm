@@ -125,8 +125,10 @@ status: ## Show status of all containers
 	@$(COMPOSE) ps
 
 health: ## Check health/status of invoice services
-	@echo "🏥 Checking service health..."
-	@docker ps --format "table {{.Names}}\t{{.Status}}" --filter "name=invoice"
+	@echo "Checking service health..."
+	@curl --fail --silent --show-error http://localhost:8000/health
+	@echo
+	@$(COMPOSE) ps
 
 logs: ## Tail logs from all containers
 	@$(COMPOSE) logs -f
@@ -161,9 +163,9 @@ mongo: ## Open a mongosh shell on the invoice database
 # =====================================================================
 #  Backend / Node tasks (run inside the live backend container)
 # =====================================================================
-backend-install: ## Reinstall backend npm dependencies in the container
+container-install: ## Reinstall backend dependencies in the live container
 	@docker exec -t --user 0 $(BACKEND) npm install
-	@echo "Backend dependencies installed"
+	@echo "Backend dependencies installed in the container"
 
 setup: ## Seed initial admin + default settings (default login admin123)
 	@docker exec -t $(BACKEND) npm run setup
@@ -177,8 +179,11 @@ upgrade: ## Run the backend upgrade/migration script
 	@docker exec -t $(BACKEND) npm run upgrade
 	@echo "Upgrade script finished"
 
+reconcile-payments: ## Recalculate invoice balances from active payments
+	@docker exec -t $(BACKEND) npm run reconcile:payments
+
 # Generate a new Mongoose model on the HOST source tree (writes to ./backend).
-# A throwaway node container mounts ./backend so no Node install is needed locally.
+# A throwaway node container mounts the repository root so no Node install is needed locally.
 # MODEL (not NAME) is used on purpose — NAME is often already set in the shell env.
 # Usage:
 #   make make-model MODEL=Product
@@ -188,17 +193,25 @@ make-model: ## Generate a new model (usage: make make-model MODEL=Product FIELDS
 		echo "Usage: make make-model MODEL=Product FIELDS=\"name:string:required price:number\" [CONTROLLER=1]"; \
 		exit 1; \
 	fi
-	@docker run --rm --user $$(id -u):$$(id -g) -v "$(PWD)/backend:/app" -w /app $(NODE_IMAGE) \
+	@docker run --rm --user $$(id -u):$$(id -g) -v "$(PWD):/app" -w /app/backend $(NODE_IMAGE) \
 		node src/cli/makeModel.js $(MODEL) $(FIELDS) $(if $(CONTROLLER),--controller,)
 	@echo "Run 'make restart' (or rebuild) so the backend picks up the new model"
 
 # =====================================================================
 #  Local development (host, hot-reload — needs Node + MongoDB)
 # =====================================================================
-install: ## Install backend + frontend npm dependencies on the host
-	@cd backend && npm install
-	@cd frontend && npm install
-	@echo "Dependencies installed (backend + frontend)"
+install: ## Install backend and frontend dependencies
+	@npm --prefix backend install
+	@npm --prefix frontend install
+	@echo "Backend and frontend dependencies installed"
+
+test: ## Run backend tests
+	@npm --prefix backend test
+
+check: ## Run backend tests and build frontend
+	@npm --prefix backend test
+	@npm --prefix frontend run build
+	@echo "Tests and frontend build passed"
 
 mongo-up: ## Start only the MongoDB container (DB for host dev servers)
 	@$(COMPOSE) up --detach mongo
@@ -206,23 +219,26 @@ mongo-up: ## Start only the MongoDB container (DB for host dev servers)
 
 dev: ## Run backend + frontend dev servers with hot reload (Ctrl+C stops both)
 	@if [ ! -x backend/node_modules/.bin/nodemon ] || [ ! -x frontend/node_modules/.bin/vite ]; then \
-		echo "❌ Dependencies missing — run 'make install' first."; exit 1; fi
+		echo "Dependencies missing — run 'make install' first."; exit 1; fi
 	-@$(COMPOSE) stop backend frontend >/dev/null 2>&1 || true
 	@$(COMPOSE) up --detach mongo
 	@echo "🚀 Backend :8000 (nodemon) + Frontend :3000 (vite). Press Ctrl+C to stop both."
 	@trap 'kill 0' INT TERM EXIT; \
-		(cd backend && npm run dev) & \
-		(cd frontend && npm run dev) & \
+		npm --prefix backend run dev & \
+		npm --prefix frontend run dev & \
 		wait
 
 dev-backend: ## Run only the backend dev server (nodemon, :8000)
-	@cd backend && npm run dev
+	@npm --prefix backend run dev
 
 dev-frontend: ## Run only the frontend dev server (vite, :3000)
-	@cd frontend && npm run dev
+	@$(COMPOSE) stop frontend >/dev/null 2>&1 || true
+	@npm --prefix frontend run dev
 
-build-frontend: ## Build the frontend for production (npm run build → frontend/dist)
-	@cd frontend && npm run build
+vite: dev-frontend ## Alias: run Vite development server
+
+build-frontend: ## Build frontend production files (frontend/dist)
+	@npm --prefix frontend run build
 	@echo "Frontend built → frontend/dist"
 
 stop-dev: ## Stop host dev servers + the mongo-up container
@@ -237,16 +253,22 @@ stop-dev: ## Stop host dev servers + the mongo-up container
 #  Frontend tasks
 # =====================================================================
 lint: ## Run frontend ESLint (in a throwaway node container)
-	@docker run --rm --user $$(id -u):$$(id -g) -v "$(PWD)/frontend:/app" -w /app $(NODE_IMAGE) \
-		sh -c "npm install --no-audit --no-fund && npm run lint"
+	@docker run --rm --user $$(id -u):$$(id -g) -v "$(PWD):/app" -w /app/frontend $(NODE_IMAGE) \
+		sh -c "npm ci --no-audit --no-fund && npm run lint"
 
 rebuild-frontend: ## Rebuild and restart only the frontend container
-	@uid=`id -u` gid=`id -g` $(COMPOSE) up --build --detach --no-deps frontend
+	@uid=`id -u` gid=`id -g` $(COMPOSE) up --build --detach --force-recreate --no-deps frontend
 	@echo "Frontend rebuilt"
 
 rebuild-backend: ## Rebuild and restart only the backend container
-	@uid=`id -u` gid=`id -g` $(COMPOSE) up --build --detach --no-deps backend
+	@uid=`id -u` gid=`id -g` $(COMPOSE) up --build --detach --force-recreate --no-deps backend
 	@echo "Backend rebuilt"
+
+restart-backend: ## Restart only backend without rebuilding its image
+	@$(COMPOSE) restart backend
+
+restart-frontend: ## Restart only frontend without rebuilding its image
+	@$(COMPOSE) restart frontend
 
 # =====================================================================
 #  Database backup / restore
@@ -277,6 +299,6 @@ clean: ## Remove dangling Docker images and build cache
 .PHONY: help up up-latest _check-stale fix-stale down restart destroy build build-prod config \
 	status health logs logs-backend logs-frontend logs-db \
 	sh-backend sh-backend-root sh-frontend sh-db mongo \
-	backend-install setup reset upgrade make-model \
-	install mongo-up dev dev-backend dev-frontend build-frontend stop-dev \
-	lint rebuild-frontend rebuild-backend db-backup db-restore clean
+	container-install setup reset upgrade make-model \
+	install test check mongo-up dev dev-backend dev-frontend vite build-frontend stop-dev \
+	lint rebuild-frontend rebuild-backend restart-backend restart-frontend db-backup db-restore clean

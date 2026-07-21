@@ -7,6 +7,7 @@ const paymentSchema = new mongoose.Schema({
   },
 
   createdBy: { type: mongoose.Schema.ObjectId, ref: 'Admin', autopopulate: true, required: true },
+  organizationId: { type: mongoose.Schema.ObjectId, ref: 'Organization', index: true },
   number: {
     type: Number,
     required: true,
@@ -38,6 +39,8 @@ const paymentSchema = new mongoose.Schema({
     uppercase: true,
     required: true,
   },
+  paymentMode: { type: mongoose.Schema.ObjectId, ref: 'PaymentMode', autopopulate: true },
+  pdf: String,
   ref: {
     type: String,
   },
@@ -54,4 +57,6 @@ const paymentSchema = new mongoose.Schema({
   },
 });
 paymentSchema.plugin(require('mongoose-autopopulate'));
+paymentSchema.index({ organizationId: 1, invoice: 1, removed: 1, date: -1 });
+paymentSchema.index({ organizationId: 1, client: 1, date: -1 });
 module.exports = mongoose.model('Payment', paymentSchema);
