@@ -36,23 +36,37 @@ export default function PaymentForm({ maxAmount = null, isUpdateForm = false }) 
             type: 'object',
           },
         ]}
-        initialValue={dayjs().add(30, 'days')}
+        initialValue={dayjs()}
         style={{ width: '100%' }}
       >
         <DatePicker format={dateFormat} style={{ width: '100%' }} />
       </Form.Item>
-      <Form.Item label={translate('amount')} name="amount" rules={[{ required: true }]}>
+      <Form.Item
+        label={translate('amount')}
+        name="amount"
+        validateTrigger="onSubmit"
+        rules={[
+          { required: true },
+          {
+            validator: (_, value) => {
+              if (value === undefined || value === null || maxAmount === null || value <= maxAmount) {
+                return Promise.resolve();
+              }
+              return Promise.reject(new Error(translate('amount_exceeds_remaining')));
+            },
+          },
+        ]}
+      >
         <InputNumber
           className="moneyInput"
           min={0}
           controls={false}
-          max={maxAmount}
           addonAfter={money.currency_position === 'after' ? money.currency_symbol : undefined}
           addonBefore={money.currency_position === 'before' ? money.currency_symbol : undefined}
         />
       </Form.Item>
       <Form.Item
-        label={translate('payment Mode')}
+        label={translate('payment_mode')}
         name="paymentMode"
         rules={[
           {
@@ -66,6 +80,7 @@ export default function PaymentForm({ maxAmount = null, isUpdateForm = false }) 
           withRedirect={true}
           urlToRedirect="/payment/mode"
           redirectLabel="Add Payment Mode"
+          autoSelectDefault={true}
         ></SelectAsync>
       </Form.Item>
       <Form.Item label={translate('Reference')} name="ref">

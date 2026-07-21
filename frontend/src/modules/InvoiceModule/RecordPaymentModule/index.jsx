@@ -2,7 +2,7 @@ import { ErpLayout } from '@/layout';
 
 import PageLoader from '@/components/PageLoader';
 import { erp } from '@/redux/erp/actions';
-import { selectItemById, selectCurrentItem, selectRecordPaymentItem } from '@/redux/erp/selectors';
+import { selectCurrentItem } from '@/redux/erp/selectors';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
@@ -12,22 +12,20 @@ export default function RecordPaymentModule({ config }) {
   const dispatch = useDispatch();
   const { id } = useParams();
 
-  let item = useSelector(selectItemById(id));
+  useEffect(() => {
+    // Always reload the invoice so its credit reflects payments just recorded.
+    dispatch(erp.currentItem({ data: {} }));
+    dispatch(erp.read({ entity: config.entity, id }));
+  }, [dispatch, config.entity, id]);
+
+  const { result: currentResult } = useSelector(selectCurrentItem);
+  const item = currentResult?._id === id ? currentResult : null;
 
   useEffect(() => {
     if (item) {
-      dispatch(erp.currentItem({ data: item }));
-    } else {
-      dispatch(erp.read({ entity: config.entity, id }));
+      dispatch(erp.currentAction({ actionType: 'recordPayment', data: item }));
     }
-  }, [item, id]);
-
-  const { result: currentResult } = useSelector(selectCurrentItem);
-  item = currentResult;
-
-  useEffect(() => {
-    dispatch(erp.currentAction({ actionType: 'recordPayment', data: item }));
-  }, [item]);
+  }, [dispatch, item]);
 
   return (
     <ErpLayout>

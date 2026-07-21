@@ -48,7 +48,7 @@ const lang = {
   send_by_email: 'Gửi qua email', convert_to_invoice: 'Chuyển thành hóa đơn', address: 'Địa chỉ', update: 'Cập nhật', created_by: 'Người tạo',
   invoice_list: 'Danh sách hóa đơn', add_new_invoice: 'Thêm hóa đơn', record_payment: 'Ghi nhận thanh toán', tax_total: 'Tổng thuế',
   proforma_invoice: 'Hóa đơn tạm tính', proforma_invoice_list: 'Danh sách hóa đơn tạm tính', add_new_proforma_invoice: 'Thêm hóa đơn tạm tính',
-  show_invoice: 'Xem hóa đơn', payment_status: 'Trạng thái thanh toán', discount: 'Giảm giá', amount: 'Số tiền', reference: 'Mã tham chiếu', ref: 'Mã tham chiếu',
+  show_invoice: 'Xem hóa đơn', payment_status: 'Trạng thái thanh toán', discount: 'Giảm giá', amount: 'Số tiền', amount_exceeds_remaining: 'Số tiền vượt quá số dư còn phải thanh toán', please_correct_form: 'Vui lòng kiểm tra lại các trường được đánh dấu', reference: 'Mã tham chiếu', ref: 'Mã tham chiếu',
   add_payment_mode: 'Thêm phương thức thanh toán', quote_list: 'Danh sách báo giá', add_new_quote: 'Thêm báo giá', payment_list: 'Danh sách thanh toán',
   add_new_payment: 'Thêm thanh toán', payment_information: 'Thông tin thanh toán', total_paid: 'Tổng đã thanh toán', total_remaining: 'Còn phải thanh toán',
   enabled: 'Đang hoạt động', default: 'Mặc định', payment_mode_list: 'Danh sách phương thức thanh toán', add_new_payment_mode: 'Thêm phương thức thanh toán',

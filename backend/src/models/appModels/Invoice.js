@@ -7,6 +7,7 @@ const invoiceSchema = new mongoose.Schema({
   },
 
   createdBy: { type: mongoose.Schema.ObjectId, ref: 'Admin', required: true },
+  organizationId: { type: mongoose.Schema.ObjectId, ref: 'Organization', index: true },
   number: {
     type: Number,
     required: true,
@@ -176,4 +177,7 @@ const invoiceSchema = new mongoose.Schema({
 });
 
 invoiceSchema.plugin(require('mongoose-autopopulate'));
+invoiceSchema.index({ organizationId: 1, number: 1, year: 1 }, { unique: true, sparse: true });
+invoiceSchema.index({ organizationId: 1, client: 1, removed: 1, date: -1 });
+invoiceSchema.index({ organizationId: 1, paymentStatus: 1, expiredDate: 1 });
 module.exports = mongoose.model('Invoice', invoiceSchema);

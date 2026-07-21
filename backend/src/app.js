@@ -15,19 +15,18 @@ const errorHandlers = require('./handlers/errorHandlers');
 const erpApiRouter = require('./routes/appRoutes/appApi');
 
 const fileUpload = require('express-fileupload');
+const { corsOptions, apiRateLimit, authRateLimit, securityHeaders, requestLogger } = require('./middlewares/security');
 // create our Express app
 const app = express();
 
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-  })
-);
+app.disable('x-powered-by');
+app.use(securityHeaders);
+app.use(requestLogger);
+app.use(cors(corsOptions));
 
 app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 app.use(compression());
 
@@ -36,10 +35,12 @@ app.use(compression());
 
 // Here our API Routes
 
-app.use('/api', coreAuthRouter);
+app.get('/health', (req, res) => res.status(200).json({ success: true }));
+app.use('/api', apiRateLimit);
+app.use('/api', authRateLimit, coreAuthRouter);
 app.use('/api', adminAuth.isValidAuthToken, coreApiRouter);
 app.use('/api', adminAuth.isValidAuthToken, erpApiRouter);
-app.use('/download', coreDownloadRouter);
+app.use('/download', adminAuth.isValidAuthToken, coreDownloadRouter);
 app.use('/public', corePublicRouter);
 
 // If that above routes didnt work, we 404 them and forward to error handler

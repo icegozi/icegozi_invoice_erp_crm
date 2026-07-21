@@ -20,6 +20,7 @@ const schema = new mongoose.Schema({
   email: String,
   createdBy: { type: mongoose.Schema.ObjectId, ref: 'Admin' },
   assigned: { type: mongoose.Schema.ObjectId, ref: 'Admin' },
+  organizationId: { type: mongoose.Schema.ObjectId, ref: 'Organization', index: true },
   created: {
     type: Date,
     default: Date.now,
@@ -29,6 +30,9 @@ const schema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+schema.index({ organizationId: 1, removed: 1, name: 1 });
+schema.index({ organizationId: 1, createdBy: 1, removed: 1 });
 
 schema.plugin(require('mongoose-autopopulate'));
 

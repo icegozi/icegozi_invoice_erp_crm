@@ -42,7 +42,10 @@ const isValidAuthToken = async (req, res, next, { userModel, jwtSecret = 'JWT_SE
         jwtExpired: true,
       });
 
-    const { loggedSessions } = userPassword;
+    if (!userPassword) {
+      return res.status(401).json({ success: false, result: null, message: 'Session is invalid.', jwtExpired: true });
+    }
+    const { loggedSessions = [] } = userPassword;
 
     if (!loggedSessions.includes(token))
       return res.status(401).json({
@@ -54,14 +57,18 @@ const isValidAuthToken = async (req, res, next, { userModel, jwtSecret = 'JWT_SE
     else {
       const reqUserName = userModel.toLowerCase();
       req[reqUserName] = user;
+      // Keep the verified subject separately from the hydrated user document.
+      // Controllers use this stable identifier for ownership fields.
+      req.authUserId = verified.id;
       next();
     }
   } catch (error) {
-    return res.status(500).json({
+    const status = error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' ? 401 : 500;
+    return res.status(status).json({
       success: false,
       result: null,
       message: error.message,
-      error: error,
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message,
       controller: 'isValidAuthToken',
       jwtExpired: true,
     });

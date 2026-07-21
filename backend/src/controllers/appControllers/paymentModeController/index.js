@@ -30,11 +30,33 @@ methods.create = async (req, res) => {
 };
 
 methods.delete = async (req, res) => {
-  return res.status(403).json({
-    success: false,
-    result: null,
-    message: "you can't delete payment mode after it has been created",
-  });
+  const paymentMode = await Model.findOne({ _id: req.params.id, removed: false }).exec();
+  if (!paymentMode) {
+    return res.status(404).json({ success: false, result: null, message: 'Payment mode not found.' });
+  }
+
+  const activeModes = await Model.countDocuments({ removed: false });
+  if (activeModes <= 1) {
+    return res.status(422).json({ success: false, result: null, message: 'At least one payment mode is required.' });
+  }
+
+  const Payment = mongoose.model('Payment');
+  const isInUse = await Payment.exists({ paymentMode: paymentMode._id, removed: false });
+  if (isInUse) {
+    return res.status(409).json({ success: false, result: null, message: 'Payment mode is used by existing payments.' });
+  }
+
+  if (paymentMode.isDefault) {
+    await Model.findOneAndUpdate(
+      { _id: { $ne: paymentMode._id }, removed: false, enabled: true },
+      { $set: { isDefault: true } }
+    );
+  }
+  paymentMode.removed = true;
+  paymentMode.isDefault = false;
+  await paymentMode.save();
+
+  return res.status(200).json({ success: true, result: paymentMode, message: 'Payment mode deleted successfully.' });
 };
 
 methods.update = async (req, res) => {

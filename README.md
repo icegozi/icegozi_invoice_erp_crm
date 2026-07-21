@@ -1,4 +1,4 @@
-# ic_goz_crm
+# Invoice ERP/CRM
 
 `ic_goz_crm` là hệ thống quản lý quan hệ khách hàng và nghiệp vụ lập chứng từ cho doanh nghiệp nhỏ: khách hàng, hóa đơn, hóa đơn tạm tính, thanh toán, thuế và cài đặt doanh nghiệp. Tài liệu này là đặc tả triển khai và vận hành cho phiên bản hiện tại.
 
@@ -65,21 +65,21 @@ Quy ước API, model và cấu trúc backend được mô tả thêm trong [CLA
 - **Email:** Mailpit chỉ dùng cho phát triển/kiểm thử. Muốn gửi thư thật phải cấu hình SMTP hợp lệ.
 - **Tương thích:** mã trạng thái và endpoint hiện có được giữ nguyên; việc dịch chỉ thay đổi nội dung hiển thị.
 
-## 5. Khởi chạy bằng Docker
+## Cài đặt và chạy ứng dụng
 
-### Điều kiện
+Có hai cách chạy ứng dụng. Dùng Docker là lựa chọn đơn giản nhất vì MongoDB, Mailpit, backend và frontend được khởi động cùng nhau. Chạy thủ công phù hợp khi phát triển giao diện/API với hot reload.
 
-- Docker Engine 20+ và Docker Compose v2.
+### Cách 1 — Docker Compose
 
-### Cài đặt
+**Yêu cầu:** Docker Engine 20+ và Docker Compose v2.
 
 ```bash
 cp .env.example .env
-# Bắt buộc đổi JWT_SECRET trước khi đưa ra môi trường thật
-docker compose up -d --build
+# Đổi JWT_SECRET thành chuỗi ngẫu nhiên trước khi triển khai thật
+make up
 ```
 
-Lần chạy đầu, backend chờ MongoDB sẵn sàng rồi seed dữ liệu và tài khoản quản trị mặc định.
+Lần chạy đầu, backend chờ MongoDB sẵn sàng rồi tự seed dữ liệu và tài khoản quản trị mặc định. Mở ứng dụng tại `http://localhost:3000`.
 
 | Dịch vụ      | Địa chỉ mặc định          | Mục đích                |
 | ------------ | ------------------------- | ----------------------- |
@@ -93,13 +93,20 @@ Tài khoản ban đầu: `admin@admin.com` / `admin123`. Chỉ dùng cho môi tr
 Các lệnh vận hành thường dùng:
 
 ```bash
-docker compose logs -f backend
-docker compose ps
-docker compose down
-docker compose down -v  # xóa cả dữ liệu MongoDB, chỉ dùng khi chủ động làm mới
+make status             # trạng thái các service
+make health             # kiểm tra API health
+make logs-backend       # theo dõi log backend
+make rebuild-backend    # build và thay backend đang chạy
+make rebuild-frontend   # build và thay frontend đang chạy
+make reconcile-payments # đồng bộ số đã thanh toán từ các phiếu payment
+make down               # dừng và gỡ container
 ```
 
-## 6. Cấu hình
+> `make destroy` xóa cả Docker volumes, bao gồm dữ liệu MongoDB. Chỉ dùng khi chủ động làm mới dữ liệu.
+
+Khi thay đổi mã nguồn, dùng `make rebuild-frontend` hoặc `make rebuild-backend` cho từng dịch vụ; dùng `make up` khi cần build và khởi động toàn bộ stack.
+
+## Cấu hình
 
 Tạo file `.env` ở thư mục gốc từ `.env.example`. Không đưa file chứa bí mật vào Git.
 
@@ -138,28 +145,50 @@ MAIL_FROM="ic_goz_crm <billing@example.com>"
 
 Không dùng thông tin SMTP thật trong môi trường local hoặc file `.env` được commit.
 
-## 7. Chạy thủ công
+### Cách 2 — Chạy thủ công (hot reload)
 
-Yêu cầu: Node.js 20.9.0+, npm 10.2.4+, một MongoDB đang chạy và (nếu cần email thử nghiệm) Mailpit.
+**Yêu cầu:** Node.js 20.9.0+, npm 10.2.4+, MongoDB và (nếu cần email thử nghiệm) Mailpit.
+
+1. Tạo cấu hình local và cài package riêng cho backend/frontend:
 
 ```bash
 cp .env.example .env
 
-cd backend
-npm install
-npm run setup
-npm run dev
+make install
 ```
 
-Mở terminal khác:
+2. Khởi động dịch vụ phụ trợ. Cách gọn nhất là chỉ dùng Docker cho MongoDB và Mailpit:
 
 ```bash
-cd frontend
-npm install
-npm run dev
+docker compose up -d mongo mailpit
 ```
 
-Khi backend chạy bên ngoài Docker nhưng Mailpit chạy cục bộ, đặt `SMTP_HOST=localhost`. Khi cả hai chạy trong Docker Compose, giữ `SMTP_HOST=mailpit`.
+Trong `.env`, giữ `DATABASE=mongodb://localhost:27017/invoice` và đặt `SMTP_HOST=localhost`, vì backend đang chạy trên máy host.
+
+3. Với database mới, seed dữ liệu ban đầu một lần:
+
+```bash
+npm --prefix backend run setup
+```
+
+4. Chạy backend và Vite cùng lúc:
+
+```bash
+make dev
+```
+
+Hoặc mở hai terminal riêng:
+
+```bash
+make dev-backend    # API: http://localhost:8000
+make dev-frontend   # Vite: http://localhost:3000
+```
+
+Để dừng hot reload và MongoDB khởi động qua Makefile, dùng `make stop-dev`. Nếu đã khởi động Mailpit thủ công bằng Compose, dừng bằng `docker compose stop mailpit`.
+
+### Đăng nhập lần đầu
+
+Với database mới, đăng nhập bằng `admin@admin.com` / `admin123`, sau đó đổi mật khẩu ngay.
 
 ## 8. Quy trình sử dụng chuẩn
 
@@ -170,7 +199,15 @@ Khi backend chạy bên ngoài Docker nhưng Mailpit chạy cục bộ, đặt `
 5. Lưu, tải PDF hoặc dùng chức năng gửi email. Với cấu hình mặc định, kiểm tra thư tại Mailpit.
 6. Khi nhận tiền, ghi nhận thanh toán để cập nhật trạng thái chứng từ và tạo biên nhận.
 
-## 9. Kiểm thử và tiêu chí nghiệm thu
+## Kiểm thử
+
+```bash
+make test       # unit/contract tests
+make check      # test và build frontend production
+make lint       # ESLint frontend trong container tạm
+```
+
+### Kiểm tra thủ công
 
 Trước khi bàn giao hoặc triển khai, xác nhận tối thiểu:
 
@@ -183,10 +220,14 @@ Trước khi bàn giao hoặc triển khai, xác nhận tối thiểu:
 - [ ] Frontend build thành công:
 
 ```bash
-cd frontend && npm run build
+make build-frontend
 ```
 
-## 10. Triển khai và bảo mật
+### Tải PDF
+
+Endpoint PDF yêu cầu Bearer token. Không mở trực tiếp URL `/download/...` trên thanh địa chỉ. Hãy dùng nút **Download** trong giao diện sau khi đăng nhập; frontend sẽ gửi token và tải file PDF an toàn.
+
+## Triển khai và bảo mật
 
 - Dùng `JWT_SECRET` ngẫu nhiên, dài và khác nhau giữa development/staging/production.
 - Đặt frontend sau HTTPS, giới hạn CORS theo domain thật và không mở MongoDB công khai.
@@ -195,11 +236,18 @@ cd frontend && npm run build
 - Sao lưu MongoDB định kỳ, kiểm thử khôi phục và cập nhật dependencies theo lịch.
 - Tạo tài khoản quản trị riêng cho từng người vận hành; không dùng chung tài khoản seed.
 
-## 11. Cấu trúc mã nguồn
+## Cấu trúc mã nguồn
 
 ```text
 backend/       Express API, model Mongoose, PDF và gửi email
 frontend/      React SPA, i18n, Redux và giao diện Ant Design
+backend/package.json    Dependencies và scripts cho API
+frontend/package.json   Dependencies và scripts cho giao diện
+Makefile       Lệnh phát triển, kiểm thử và Docker
 docker-compose.yml
 .env.example   Mẫu cấu hình môi trường
 ```
+
+## Giấy phép
+
+Dự án sử dụng giấy phép được nêu trong [LICENSE](LICENSE).

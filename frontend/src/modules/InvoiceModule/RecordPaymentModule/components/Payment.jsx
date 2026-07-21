@@ -10,6 +10,7 @@ import { useMoney } from '@/settings';
 
 import RecordPayment from './RecordPayment';
 import useLanguage from '@/locale/useLanguage';
+import calculate from '@/utils/calculate';
 
 import { useNavigate } from 'react-router-dom';
 
@@ -93,10 +94,9 @@ export default function Payment({ config, currentItem }) {
           lg={{ span: 10, order: 2, push: 4 }}
         >
           <div className="space50"></div>
-          <Descriptions title={`${translate('Client')}  : ${currentErp.client.name}`} column={1}>
+            <Descriptions title={`${translate('Client')}  : ${currentErp.client.name}`} column={1}>
             <Descriptions.Item label={translate('email')}>{client.email}</Descriptions.Item>
             <Descriptions.Item label={translate('phone')}>{client.phone}</Descriptions.Item>
-            <Divider dashed />
             <Descriptions.Item label={translate('payment status')}>
               <span>{currentErp.paymentStatus && translate(currentErp.paymentStatus)}</span>
             </Descriptions.Item>
@@ -121,6 +121,15 @@ export default function Payment({ config, currentItem }) {
             <Descriptions.Item label={translate('Paid')}>
               {money.moneyFormatter({
                 amount: currentErp.credit,
+                currency_code: currentErp.currency,
+              })}
+            </Descriptions.Item>
+            <Descriptions.Item label={translate('total_remaining')}>
+              {money.moneyFormatter({
+                amount: calculate.sub(
+                  calculate.sub(currentErp.total, currentErp.discount),
+                  currentErp.credit
+                ),
                 currency_code: currentErp.currency,
               })}
             </Descriptions.Item>

@@ -35,9 +35,9 @@ export default function Delete({ config }) {
   }, [isSuccess, current]);
 
   const handleOk = () => {
+    if (!current?._id || isLoading) return;
     const id = current._id;
     dispatch(erp.delete({ entity, id }));
-    modal.close();
   };
   const handleCancel = () => {
     if (!isLoading) modal.close();
@@ -49,6 +49,7 @@ export default function Delete({ config }) {
       onOk={handleOk}
       onCancel={handleCancel}
       confirmLoading={isLoading}
+      destroyOnClose
     >
       <p>
         {deleteMessage}
