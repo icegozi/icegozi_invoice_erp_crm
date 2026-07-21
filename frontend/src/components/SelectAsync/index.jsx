@@ -15,6 +15,7 @@ const SelectAsync = ({
   withRedirect = false,
   urlToRedirect = '/',
   placeholder = 'select',
+  autoSelectDefault = false,
   value,
   onChange,
 }) => {
@@ -25,12 +26,20 @@ const SelectAsync = ({
   const navigate = useNavigate();
 
   const asyncList = () => {
-    return request.list({ entity });
+    return request.listAll({ entity, options: { enabled: 'true' } });
   };
   const { result, isLoading: fetchIsLoading, isSuccess } = useFetch(asyncList);
   useEffect(() => {
-    isSuccess && setOptions(result);
-  }, [isSuccess]);
+    if (isSuccess) setOptions(Array.isArray(result) ? result : []);
+  }, [isSuccess, result]);
+
+  useEffect(() => {
+    if (!autoSelectDefault || currentValue !== undefined || !selectOptions.length) return;
+    const defaultOption = selectOptions.find((option) => option.isDefault) || selectOptions[0];
+    const defaultValue = defaultOption[outputValue] ?? defaultOption;
+    setCurrentValue(defaultValue);
+    onChange(defaultValue);
+  }, [autoSelectDefault, currentValue, onChange, outputValue, selectOptions]);
 
   const labels = (optionField) => {
     return displayLabels.map((x) => optionField[x]).join(' ');
@@ -41,7 +50,7 @@ const SelectAsync = ({
       setCurrentValue(val);
       onChange(val);
     }
-  }, [value]);
+  }, [value, outputValue, onChange]);
 
   const handleSelectChange = (newValue) => {
     if (newValue === 'redirectURL') {

@@ -18,6 +18,7 @@ export default function Payment({ config, currentItem }) {
   const navigate = useNavigate();
 
   const [currentErp, setCurrentErp] = useState(currentItem);
+  const invoiceId = currentItem?.invoice?._id || currentItem?.invoice;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -64,7 +65,8 @@ export default function Payment({ config, currentItem }) {
               </Button>,
               <Button
                 key={`${uniqueId()}`}
-                onClick={() => navigate(`/invoice/read/${currentErp._id}`)}
+                disabled={!invoiceId}
+                onClick={() => navigate(`/invoice/read/${invoiceId}`)}
                 icon={<FileTextOutlined />}
               >
                 {translate('Show invoice')}

@@ -52,7 +52,7 @@ export default function PaymentForm({ maxAmount = null, isUpdateForm = false }) 
         />
       </Form.Item>
       <Form.Item
-        label={translate('payment Mode')}
+        label={translate('payment_mode')}
         name="paymentMode"
         rules={[
           {
@@ -66,6 +66,7 @@ export default function PaymentForm({ maxAmount = null, isUpdateForm = false }) 
           withRedirect={true}
           urlToRedirect="/payment/mode"
           redirectLabel="Add Payment Mode"
+          autoSelectDefault={true}
         ></SelectAsync>
       </Form.Item>
       <Form.Item label={translate('Reference')} name="ref">

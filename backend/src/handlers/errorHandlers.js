@@ -69,9 +69,9 @@ exports.developmentErrors = (error, req, res, next) => {
   No stacktraces are leaked to admin
 */
 exports.productionErrors = (error, req, res, next) => {
+  console.error(JSON.stringify({ level: 'error', event: 'unhandled_error', message: error.message, path: req.path }));
   return res.status(500).json({
     success: false,
-    message: error.message,
-    error: error,
+    message: 'An unexpected server error occurred.',
   });
 };

@@ -34,6 +34,7 @@ export default function ReadItem({ config, selectedItem }) {
   const navigate = useNavigate();
 
   const { result: currentResult } = useSelector(selectCurrentItem);
+  const invoiceId = currentResult?.invoice?._id || selectedItem?.invoice?._id;
 
   const resetErp = {
     status: '',
@@ -176,7 +177,13 @@ export default function ReadItem({ config, selectedItem }) {
           <Typography.Title level={5}>{translate('Payment Information')} :</Typography.Title>
         </Col>
         <Col sm={24} md={12} style={{ textAlign: 'right' }}>
-          <Button icon={<ExportOutlined />}>{translate('Show invoice')}</Button>
+          <Button
+            icon={<ExportOutlined />}
+            disabled={!invoiceId}
+            onClick={() => navigate(`/invoice/read/${invoiceId}`)}
+          >
+            {translate('Show invoice')}
+          </Button>
         </Col>
       </Row>
       <div

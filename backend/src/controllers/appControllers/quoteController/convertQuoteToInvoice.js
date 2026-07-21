@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 
 const { calculate } = require('@/helpers');
-const { increaseBySettingKey, loadSettings } = require('@/middlewares/settings');
 
 const Quote = mongoose.model('Quote');
 const Invoice = mongoose.model('Invoice');
@@ -9,7 +8,10 @@ const Invoice = mongoose.model('Invoice');
 const convertQuoteToInvoice = async (req, res) => {
   const { id } = req.params;
 
-  const quote = await Quote.findOne({ _id: id, removed: false }).exec();
+  const ownershipFilter = req.admin.organizationId
+    ? { organizationId: req.admin.organizationId }
+    : { createdBy: req.admin._id };
+  const quote = await Quote.findOne({ _id: id, removed: false, ...ownershipFilter }).exec();
   if (!quote) {
     return res.status(404).json({
       success: false,
@@ -26,10 +28,6 @@ const convertQuoteToInvoice = async (req, res) => {
     });
   }
 
-  // Next invoice number from settings (mirrors the invoice create flow)
-  const settings = await loadSettings();
-  const lastInvoiceNumber = parseInt(settings['last_invoice_number'], 10) || 0;
-  const number = lastInvoiceNumber + 1;
   const year = new Date().getFullYear();
 
   // Recompute item totals + tax (same logic as invoiceController/create.js)
@@ -53,7 +51,8 @@ const convertQuoteToInvoice = async (req, res) => {
 
   const invoiceData = {
     createdBy: req.admin._id,
-    number,
+    organizationId: req.admin.organizationId,
+    number: 0,
     year,
     content: quote.content,
     date: new Date(),
@@ -72,19 +71,39 @@ const convertQuoteToInvoice = async (req, res) => {
     converted: { from: 'quote', quote: quote._id },
   };
 
-  const invoice = await new Invoice(invoiceData).save();
-
-  // Attach the generated PDF file name (consistent with invoice create)
-  const fileId = 'invoice-' + invoice._id + '.pdf';
-  const result = await Invoice.findOneAndUpdate(
-    { _id: invoice._id },
-    { pdf: fileId },
-    { new: true }
-  ).exec();
-
-  // Mark the quote as converted and bump the invoice counter
-  await Quote.findOneAndUpdate({ _id: id }, { $set: { converted: true } }).exec();
-  await increaseBySettingKey({ settingKey: 'last_invoice_number' });
+  const Setting = mongoose.model('Setting');
+  const session = await mongoose.startSession();
+  let result;
+  try {
+    await session.withTransaction(async () => {
+      const settingFilter = req.admin.organizationId
+        ? { settingKey: 'last_invoice_number', organizationId: req.admin.organizationId }
+        : { settingKey: 'last_invoice_number', organizationId: { $exists: false } };
+      const counter = await Setting.findOneAndUpdate(
+        settingFilter,
+        { $inc: { settingValue: 1 } },
+        { new: true, session, runValidators: true }
+      );
+      if (!counter) throw new Error('Invoice counter setting is missing.');
+      invoiceData.number = Number(counter.settingValue);
+      const invoice = await new Invoice(invoiceData).save({ session });
+      invoice.pdf = `invoice-${invoice._id}.pdf`;
+      await invoice.save({ session });
+      const conversion = await Quote.updateOne(
+        { _id: id, removed: false, converted: false, ...ownershipFilter },
+        { $set: { converted: true } },
+        { session }
+      );
+      if (conversion.modifiedCount !== 1) {
+        const error = new Error('This quote has already been converted to an invoice.');
+        error.status = 409;
+        throw error;
+      }
+      result = invoice;
+    });
+  } finally {
+    await session.endSession();
+  }
 
   return res.status(200).json({
     success: true,

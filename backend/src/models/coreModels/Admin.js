@@ -30,8 +30,11 @@ const adminSchema = new Schema({
   role: {
     type: String,
     default: 'owner',
-    enum: ['owner'],
+    enum: ['owner', 'admin', 'accountant', 'sales', 'viewer'],
   },
+  organizationId: { type: mongoose.Schema.ObjectId, ref: 'Organization', index: true },
 });
+
+adminSchema.index({ organizationId: 1, email: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('Admin', adminSchema);

@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const Model = mongoose.model('Invoice');
 
 const { calculate } = require('@/helpers');
-const { increaseBySettingKey } = require('@/middlewares/settings');
 const schema = require('./schemaValidate');
 
 const create = async (req, res) => {
@@ -46,22 +45,31 @@ const create = async (req, res) => {
 
   body['paymentStatus'] = paymentStatus;
   body['createdBy'] = req.admin._id;
+  body['organizationId'] = req.admin.organizationId;
 
-  // Creating a new document in the collection
-  const result = await new Model(body).save();
-  const fileId = 'invoice-' + result._id + '.pdf';
-  const updateResult = await Model.findOneAndUpdate(
-    { _id: result._id },
-    { pdf: fileId },
-    {
-      new: true,
-    }
-  ).exec();
-  // Returning successfull response
-
-  increaseBySettingKey({
-    settingKey: 'last_invoice_number',
-  });
+  const Setting = mongoose.model('Setting');
+  const session = await mongoose.startSession();
+  let updateResult;
+  try {
+    await session.withTransaction(async () => {
+      const settingFilter = req.admin.organizationId
+        ? { settingKey: 'last_invoice_number', organizationId: req.admin.organizationId }
+        : { settingKey: 'last_invoice_number', organizationId: { $exists: false } };
+      const counter = await Setting.findOneAndUpdate(
+        settingFilter,
+        { $inc: { settingValue: 1 } },
+        { new: true, session, runValidators: true }
+      );
+      if (!counter) throw new Error('Invoice counter setting is missing.');
+      body.number = Number(counter.settingValue);
+      const result = await new Model(body).save({ session });
+      result.pdf = `invoice-${result._id}.pdf`;
+      await result.save({ session });
+      updateResult = result;
+    });
+  } finally {
+    await session.endSession();
+  }
 
   // Returning successfull response
   return res.status(200).json({

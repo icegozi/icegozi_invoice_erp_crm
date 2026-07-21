@@ -22,10 +22,13 @@ const schema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  organizationId: { type: mongoose.Schema.ObjectId, ref: 'Organization', index: true },
   created: {
     type: Date,
     default: Date.now,
   },
 });
+
+schema.index({ organizationId: 1, enabled: 1, isDefault: 1 });
 
 module.exports = mongoose.model('Taxes', schema);

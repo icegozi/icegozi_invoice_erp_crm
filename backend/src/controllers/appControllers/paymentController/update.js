@@ -14,35 +14,10 @@ const update = async (req, res) => {
       message: `The Minimum Amount couldn't be 0`,
     });
   }
-  // Find document by id and updates with the required fields
-  const previousPayment = await Model.findOne({
-    _id: req.params.id,
-    removed: false,
-  });
-
-  const { amount: previousAmount } = previousPayment;
-  const { id: invoiceId, total, discount, credit: previousCredit } = previousPayment.invoice;
-
-  const { amount: currentAmount } = req.body;
-
-  const changedAmount = calculate.sub(currentAmount, previousAmount);
-  const maxAmount = calculate.sub(total, calculate.add(discount, previousCredit));
-
-  if (changedAmount > maxAmount) {
-    return res.status(202).json({
-      success: false,
-      result: null,
-      message: `The Max Amount you can add is ${maxAmount + previousAmount}`,
-      error: `The Max Amount you can add is ${maxAmount + previousAmount}`,
-    });
+  const currentAmount = Number(req.body.amount);
+  if (!Number.isFinite(currentAmount) || currentAmount <= 0) {
+    return res.status(400).json({ success: false, result: null, message: 'Amount must be greater than zero.' });
   }
-
-  let paymentStatus =
-    calculate.sub(total, discount) === calculate.add(previousCredit, changedAmount)
-      ? 'paid'
-      : calculate.add(previousCredit, changedAmount) > 0
-      ? 'partially'
-      : 'unpaid';
 
   const updatedDate = new Date();
   const updates = {
@@ -55,26 +30,39 @@ const update = async (req, res) => {
     updated: updatedDate,
   };
 
-  const result = await Model.findOneAndUpdate(
-    { _id: req.params.id, removed: false },
-    { $set: updates },
-    {
-      new: true, // return the new result instead of the old one
-    }
-  ).exec();
-
-  const updateInvoice = await Invoice.findOneAndUpdate(
-    { _id: result.invoice._id.toString() },
-    {
-      $inc: { credit: changedAmount },
-      $set: {
-        paymentStatus: paymentStatus,
-      },
-    },
-    {
-      new: true, // return the new result instead of the old one
-    }
-  ).exec();
+  const session = await mongoose.startSession();
+  let result;
+  try {
+    await session.withTransaction(async () => {
+      const previousPayment = await Model.findOne({ _id: req.params.id, removed: false }).session(session);
+      if (!previousPayment) {
+        const error = new Error('Payment not found.'); error.status = 404; throw error;
+      }
+      const changedAmount = calculate.sub(currentAmount, previousPayment.amount);
+      const invoice = await Invoice.findOneAndUpdate(
+        {
+          _id: previousPayment.invoice,
+          removed: false,
+          $expr: { $and: [
+            { $gte: [{ $add: ['$credit', changedAmount] }, 0] },
+            { $lte: [{ $add: ['$credit', changedAmount] }, { $subtract: ['$total', '$discount'] }] },
+          ] },
+        },
+        { $inc: { credit: changedAmount } },
+        { new: true, session }
+      );
+      if (!invoice) {
+        const error = new Error('Payment amount exceeds the remaining balance.'); error.status = 400; throw error;
+      }
+      const paymentStatus = calculate.sub(invoice.total, invoice.discount) === invoice.credit ? 'paid' : invoice.credit > 0 ? 'partially' : 'unpaid';
+      result = await Model.findOneAndUpdate({ _id: previousPayment._id }, { $set: updates }, { new: true, session });
+      await Invoice.updateOne({ _id: invoice._id }, { $set: { paymentStatus } }, { session });
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({ success: false, result: null, message: error.message });
+  } finally {
+    await session.endSession();
+  }
 
   return res.status(200).json({
     success: true,

@@ -6,6 +6,7 @@ const quoteSchema = new mongoose.Schema({
     default: false,
   },
   createdBy: { type: mongoose.Schema.ObjectId, ref: 'Admin', required: true },
+  organizationId: { type: mongoose.Schema.ObjectId, ref: 'Organization', index: true },
 
   converted: {
     type: Boolean,
@@ -138,4 +139,6 @@ const quoteSchema = new mongoose.Schema({
 });
 
 quoteSchema.plugin(require('mongoose-autopopulate'));
+quoteSchema.index({ organizationId: 1, number: 1, year: 1 }, { unique: true, sparse: true });
+quoteSchema.index({ organizationId: 1, client: 1, removed: 1, date: -1 });
 module.exports = mongoose.model('Quote', quoteSchema);

@@ -6,6 +6,7 @@ services:
     image: mongo:7
     container_name: invoice-mongo
     restart: unless-stopped
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     ports:
       - "27017:27017"
     volumes:
@@ -15,6 +16,21 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  mongo-init:
+    image: mongo:7
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: "no"
+    command:
+      - bash
+      - -ec
+      - |
+        if ! mongosh --host mongo --quiet --eval 'try { rs.conf(); quit(0); } catch (e) { quit(1); }' >/dev/null 2>&1; then
+          mongosh --host mongo --quiet --eval 'rs.initiate({_id:"rs0", members:[{_id:0, host:"mongo:27017"}]})'
+        fi
+        until mongosh --host mongo --quiet --eval 'db.hello().isWritablePrimary' | grep -q true; do sleep 1; done
 
   mailpit:
     image: axllent/mailpit:latest
@@ -31,11 +47,13 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
       mailpit:
         condition: service_started
     environment:
       # Docker always uses the bundled MongoDB service (ignores DATABASE in .env)
-      DATABASE: "mongodb://mongo:27017/invoice"
+      DATABASE: "mongodb://mongo:27017/invoice?replicaSet=rs0"
       PORT: "8000"
       NODE_ENV: "production"
       JWT_SECRET: "${JWT_SECRET:-change_this_jwt_secret_in_production}"
