@@ -1,7 +1,7 @@
 # Kế hoạch chuẩn hóa tài liệu cho SaaS Enterprise
 
 Đối tượng: người triển khai và reviewer. Phụ trách: Maintainer.
-Trạng thái: kế hoạch đã được người dùng yêu cầu triển khai.
+Trạng thái: triển khai và nghiệm thu tài liệu local hoàn tất; readiness SaaS được đánh giá riêng.
 Phiên bản đối chiếu: `4.1.0`, baseline `d9187d0`. Rà soát: `2026-10-18`.
 
 > For agentic workers: triển khai từng task theo `superpowers:executing-plans`.
@@ -92,12 +92,12 @@ Expected: lỗi lint/link thất bại; anchor tiếng Việt đúng thành côn
 
 ## Task 5: Nghiệm thu và bàn giao
 
-- [ ] Review theo vai trò người dùng, developer và operator.
-- [ ] Kiểm tra quickstart trong môi trường cách ly.
-- [ ] Lint, links và git diff --check thành công.
-- [ ] CHANGELOG Unreleased ghi đúng thay đổi.
-- [ ] Kiểm tra phạm vi diff và nguồn dữ liệu; commit riêng.
-- [ ] Bàn giao mục lục, bằng chứng kiểm tra và điều kiện SaaS còn thiếu.
+- [x] Review theo vai trò người dùng, developer và operator.
+- [x] Kiểm tra quickstart trong môi trường cách ly.
+- [x] Lint, links và git diff --check thành công.
+- [x] CHANGELOG Unreleased ghi đúng thay đổi.
+- [x] Kiểm tra phạm vi diff và nguồn dữ liệu; commit riêng.
+- [x] Bàn giao mục lục, bằng chứng kiểm tra và điều kiện SaaS còn thiếu.
 
 ## Review Focus
 

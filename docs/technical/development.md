@@ -30,10 +30,36 @@ Không sửa lockfile chỉ để bỏ qua cảnh báo phiên bản.
 Chỉ dùng các bước sau trên checkout/môi trường local đã xác định rõ.
 Không chạy nguyên Compose từ checkout khác song song vì có tên container/cổng cố định.
 
-```bash
-docker compose up --detach mongo mongo-init mailpit
+Compose chỉ publish UI Mailpit, chưa publish SMTP cho backend chạy trên host.
+Dùng override qua stdin dưới đây để thêm SMTP trên loopback; cổng `1025` phải đang trống.
+Không lưu override vào source hoặc đổi Compose mặc định.
+
+PowerShell:
+
+```powershell
+@'
+services:
+  mailpit:
+    ports:
+      - "127.0.0.1:1025:1025"
+'@ | docker compose -f docker-compose.yml -f - up --detach mongo mongo-init mailpit
 docker compose stop backend frontend
 ```
+
+Bash:
+
+```bash
+docker compose -f docker-compose.yml -f - up --detach mongo mongo-init mailpit <<'YAML'
+services:
+  mailpit:
+    ports:
+      - "127.0.0.1:1025:1025"
+YAML
+docker compose stop backend frontend
+```
+
+UI Mailpit vẫn ở `http://localhost:8026`; SMTP native dùng `localhost:1025`.
+Khi quay lại full Docker, chạy quickstart bằng Compose mặc định để bỏ mapping SMTP bổ sung.
 
 Tạo `.env` ở root từ mẫu và đặt kết nối:
 
@@ -44,6 +70,8 @@ FRONTEND_URL=http://localhost:3000
 SMTP_HOST=localhost
 SMTP_PORT=1025
 SMTP_SECURE=false
+SMTP_USER=
+SMTP_PASS=
 ```
 
 `directConnection=true` hữu ích khi driver native không phân giải được hostname `mongo` do replica set công bố.

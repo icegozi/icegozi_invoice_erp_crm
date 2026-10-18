@@ -193,8 +193,10 @@ Không có một error schema đồng nhất cho mọi handler.
 | 429 | Vượt rate limit |
 | 500 | Lỗi handler/server; không hiển thị nguyên payload nội bộ cho người dùng |
 
-API giới hạn mặc định 300 request/15 phút; auth limiter đếm request auth thất bại, mặc định 50/15 phút.
-API limiter vẫn tính cả request login thành công.
+API limiter giới hạn mặc định 300 request/15 phút, tính cả request login thành công.
+`authRateLimit` cũng được mount trên toàn `/api`, mặc định 50 request thất bại/15 phút.
+`skipSuccessfulRequests` bỏ các phản hồi thành công khỏi bộ đếm sau khi xử lý;
+lỗi từ route nghiệp vụ cũng có thể tiêu thụ quota này và dẫn đến `429`, không chỉ lỗi login/reset.
 Giới hạn và proxy cần được kiểm tra lại trước triển khai SaaS nhiều instance.
 
 ## Nguồn đối chiếu

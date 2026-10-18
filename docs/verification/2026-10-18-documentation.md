@@ -99,6 +99,21 @@ Các thao tác tạo chứng từ, backup/restore và kiểm tra ghi đều dùn
 
 Thay đổi Dockerfile và root package-lock có sẵn trước tác vụ được giữ ngoài các commit tài liệu.
 
+## Review độc lập và giới hạn bằng chứng
+
+Reviewer đọc độc lập source/diff, chạy cả hai checker và xác nhận SHA action với upstream.
+Không phát hiện lỗi nghiêm trọng. Hai sai lệch tài liệu được sửa trong một lượt:
+
+- Hướng dẫn native thêm override SMTP loopback; Compose config resolve đúng cả cổng SMTP và UI.
+- API/cấu hình ghi đúng auth limiter áp dụng toàn `/api`, bao gồm lỗi nghiệp vụ.
+
+Reviewer không chạy lại Docker/restore hoặc tạo fixture âm vì phiên review chỉ đọc.
+Các kiểm tra thực thi đó do người triển khai chạy; bảng trên phân biệt kết quả với giới hạn.
+Chưa nghiệm thu remote GitHub Actions hoặc render Mermaid/UI trên GitHub.
+Không chấm chứng nhận sản phẩm hoặc cam kết production từ biên bản local này.
+Các lỗi ứng dụng có sẵn được công bố trong readiness và cần đợt sửa/kiểm thử riêng.
+Đọc số lượng bản ghi live không thay thế chứng nhận toàn bộ nội dung database.
+
 ## Điều kiện phát hành còn thiếu
 
 Tái hiện được PDF đã sinh vẫn truy cập qua đường `/public` mà không cần Bearer.

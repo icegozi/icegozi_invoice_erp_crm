@@ -32,7 +32,7 @@ Không tạo thêm file chứa bí mật để chữa triệu chứng nếu chư
 | `FRONTEND_URL` | reset link và fallback CORS; reset mặc định localhost:3000 | Có map | Không |
 | `CORS_ORIGINS` | security; nếu trống dùng FRONTEND_URL | Chưa map; root .env không tự truyền | Không |
 | `API_RATE_LIMIT` | security; `300`/15 phút | Chưa map; dùng fallback | Không |
-| `AUTH_RATE_LIMIT` | security; `50`/15 phút thất bại | Chưa map; dùng fallback | Không |
+| `AUTH_RATE_LIMIT` | security; `50` request thất bại/15 phút trên toàn `/api`, gồm lỗi nghiệp vụ | Chưa map; dùng fallback | Không |
 | `PUBLIC_SERVER_FILE` | PDF; không có fallback ở chỗ gán settings | Lấy từ `VITE_BACKEND_SERVER` | Không |
 | `SMTP_HOST` | mailer; `localhost` | Có map, default `mailpit` | Có thể |
 | `SMTP_PORT` | mailer; `1025`, phải 1–65535 | Có map | Không |
