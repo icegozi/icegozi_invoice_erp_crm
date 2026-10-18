@@ -13,6 +13,7 @@ Schema có `organizationId` nhưng bộ lọc dữ liệu, settings và đườn
 Việc chuẩn hóa tài liệu không thay thế triển khai và kiểm thử các điều kiện này.
 
 Xem [mục lục tài liệu](docs/README.md) để chọn hướng dẫn theo vai trò.
+Các điều kiện còn thiếu được theo dõi trong [bảng readiness SaaS](docs/security/saas-readiness.md).
 
 ## Chạy local bằng Docker
 

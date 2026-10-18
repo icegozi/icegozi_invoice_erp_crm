@@ -4,6 +4,10 @@
 
 ## Bắt đầu
 
+- [Triển khai/phát hành](../docs/operations/deployment.md).
+- [Runbook backup/restore và sự cố](../docs/operations/runbook.md).
+- [Điều kiện SaaS](../docs/security/saas-readiness.md).
+
 - [Quickstart local](../README.md#chạy-local-bằng-docker).
 - [Mục lục tài liệu và trạng thái SaaS](../docs/README.md).
 - [Compose](../docker-compose.yml): local với cổng và tên container cố định.
