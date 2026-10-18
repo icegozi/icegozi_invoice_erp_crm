@@ -5,14 +5,14 @@ WORKDIR /app/backend
 ENV NODE_OPTIONS=--dns-result-order=ipv4first
 
 ENV PUPPETEER_SKIP_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+  PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
-     chromium fontconfig libfreetype6 fonts-dejavu-core \
-     fonts-liberation libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
-     libdrm2 libgbm1 libasound2 libpangocairo-1.0-0 libxcomposite1 \
-     libxdamage1 libxfixes3 libxrandr2 libxkbcommon0 ca-certificates \
+  chromium fontconfig libfreetype6 fonts-dejavu-core \
+  fonts-liberation libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
+  libdrm2 libgbm1 libasound2 libpangocairo-1.0-0 libxcomposite1 \
+  libxdamage1 libxfixes3 libxrandr2 libxkbcommon0 ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
 COPY backend/package*.json ./
@@ -28,7 +28,9 @@ RUN mkdir -p src/public/download src/public/uploads
 
 COPY backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh \
+  && chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 8000
 
