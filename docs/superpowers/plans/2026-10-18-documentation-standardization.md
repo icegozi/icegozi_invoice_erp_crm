@@ -42,51 +42,51 @@ Không dựng website tài liệu hoặc thêm seed nghiệp vụ mặc định.
 
 ## Task 1: Sửa sai lệch và thiết lập điểm vào
 
-- [ ] Đối chiếu lệnh, phiên bản, đường dẫn, biến môi trường với code.
-- [ ] Thay hướng dẫn Create React App bằng Vite.
-- [ ] Ghi Authorization: Bearer và yêu cầu auth của download.
-- [ ] Backend có tests, frontend chưa có test suite.
-- [ ] Loại upgrade khỏi bước sử dụng bình thường; ghi giới hạn đã biết.
-- [ ] Rút gọn README, lập mục lục và giữ các điểm vào cũ.
-- [ ] Kiểm tra liên kết và commit riêng.
+- [x] Đối chiếu lệnh, phiên bản, đường dẫn, biến môi trường với code.
+- [x] Thay hướng dẫn Create React App bằng Vite.
+- [x] Ghi Authorization: Bearer và yêu cầu auth của download.
+- [x] Backend có tests, frontend chưa có test suite.
+- [x] Loại upgrade khỏi bước sử dụng bình thường; ghi giới hạn đã biết.
+- [x] Rút gọn README, lập mục lục và giữ các điểm vào cũ.
+- [x] Kiểm tra liên kết và commit riêng.
 
 Expected: không còn hướng dẫn sai về framework, token, test hoặc script upgrade.
 
 ## Task 2: Tài liệu sản phẩm và kỹ thuật
 
-- [ ] Hướng dẫn khách hàng, báo giá, chuyển hóa đơn, thu tiền nhiều đợt, PDF/email.
-- [ ] Công thức dòng hàng, thuế, chiết khấu, credit và số còn phải thu.
-- [ ] Sơ đồ thành phần, dữ liệu và phạm vi organizationId hiện tại.
-- [ ] API: route, method, auth, role, payload, phân trang, lỗi và file.
-- [ ] Cấu hình: nơi đọc, mặc định, độ nhạy cảm và build/runtime.
-- [ ] Env theo entrypoint; hướng dẫn Windows và Bash.
-- [ ] Kiểm tra luồng cách ly và commit riêng.
+- [x] Hướng dẫn khách hàng, báo giá, chuyển hóa đơn, thu tiền nhiều đợt, PDF/email.
+- [x] Công thức dòng hàng, thuế, chiết khấu, credit và số còn phải thu.
+- [x] Sơ đồ thành phần, dữ liệu và phạm vi organizationId hiện tại.
+- [x] API: route, method, auth, role, payload, phân trang, lỗi và file.
+- [x] Cấu hình: nơi đọc, mặc định, độ nhạy cảm và build/runtime.
+- [x] Env theo entrypoint; hướng dẫn Windows và Bash.
+- [x] Kiểm tra luồng cách ly và commit riêng.
 
 Expected: người mới chạy local và đối chiếu được luồng nghiệp vụ với API.
 
 ## Task 3: Vận hành và readiness SaaS
 
-- [ ] Phân biệt Compose local và điều kiện staging/production.
-- [ ] Backup/restore MongoDB và uploads; phân biệt archive thường/gzip.
-- [ ] Phát hành, rollback, kiểm tra sau restore và xử lý sự cố.
-- [ ] Health chỉ xác nhận API phản hồi.
-- [ ] Readiness: hiện trạng, bằng chứng, ưu tiên, phụ trách, điều kiện nghiệm thu.
-- [ ] Tenant isolation: đọc/ghi, liên kết, settings, counter, PDF và uploads.
-- [ ] RBAC khác phạm vi dữ liệu; ghi chính sách chưa được xác nhận.
-- [ ] Kiểm tra và commit riêng.
+- [x] Phân biệt Compose local và điều kiện staging/production.
+- [x] Backup/restore MongoDB và uploads; phân biệt archive thường/gzip.
+- [x] Phát hành, rollback, kiểm tra sau restore và xử lý sự cố.
+- [x] Health chỉ xác nhận API phản hồi.
+- [x] Readiness: hiện trạng, bằng chứng, ưu tiên, phụ trách, điều kiện nghiệm thu.
+- [x] Tenant isolation: đọc/ghi, liên kết, settings, counter, PDF và uploads.
+- [x] RBAC khác phạm vi dữ liệu; ghi chính sách chưa được xác nhận.
+- [x] Kiểm tra và commit riêng.
 
 Expected: không tuyên bố sẵn sàng SaaS khi chưa có bằng chứng.
 
 ## Task 4: Kiểm tra tài liệu trong CI
 
-- [ ] Workflow riêng trên push/PR, quyền đọc; giữ nguyên CI ứng dụng.
-- [ ] Pin markdownlint-cli2-action v24.2.0 và lychee-action v2.9.0 theo SHA.
-- [ ] Pin lychee v0.24.2.
-- [ ] Heading, danh sách, fence; dòng 120 ký tự, miễn code block và bảng.
-- [ ] Link, ảnh, anchor nội bộ offline; lỗi làm job thất bại.
-- [ ] Gồm .github; loại dependencies, build, uploads và backups.
-- [ ] Không tự sửa/tạo issue; hướng dẫn contributors chạy tương đương.
-- [ ] Kiểm tra trường hợp âm và commit riêng.
+- [x] Workflow riêng trên push/PR, quyền đọc; giữ nguyên CI ứng dụng.
+- [x] Pin markdownlint-cli2-action v24.2.0 và lychee-action v2.9.0 theo SHA.
+- [x] Pin lychee v0.24.2.
+- [x] Heading, danh sách, fence; dòng 120 ký tự, miễn code block và bảng.
+- [x] Link, ảnh, anchor nội bộ offline; lỗi làm job thất bại.
+- [x] Gồm .github; loại dependencies, build, uploads và backups.
+- [x] Không tự sửa/tạo issue; hướng dẫn contributors chạy tương đương.
+- [x] Kiểm tra trường hợp âm và commit riêng.
 
 Expected: lỗi lint/link thất bại; anchor tiếng Việt đúng thành công.
 

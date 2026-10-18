@@ -12,6 +12,7 @@ Phiên bản package hiện khai báo `4.1.0`.
 - Bổ sung triển khai, backup/restore database và uploads, xử lý sự cố và rollback.
 - Ghi rõ security model, giới hạn hiện có và điều kiện nghiệm thu SaaS chia sẻ.
 - Thêm quy chuẩn viết/review; dùng nguồn code và phiên bản đối chiếu để hạn chế sai lệch.
+- Lưu kế hoạch và biên bản nghiệm thu local, gồm luồng chứng từ và backup/restore cách ly.
 
 ### Kiểm tra tài liệu
 

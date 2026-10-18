@@ -46,6 +46,7 @@ Không đưa dữ liệu khách hàng thật vào SaaS chia sẻ chỉ dựa tr�
 
 Quy chuẩn, vai trò review và lệnh kiểm tra nằm trong [CONTRIBUTING](../CONTRIBUTING.md).
 Thay đổi đã thực hiện được ghi ở [CHANGELOG](../CHANGELOG.md).
+Kết quả kiểm tra nằm trong [biên bản nghiệm thu](verification/2026-10-18-documentation.md).
 
 Ưu tiên route, controller, schema, package scripts và cấu hình thực tế khi nội dung cũ mâu thuẫn.
 Tài liệu bổ sung phải ghi nguồn đối chiếu và tách hiện trạng khỏi mục tiêu.
