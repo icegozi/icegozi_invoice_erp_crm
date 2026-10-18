@@ -1,0 +1,19 @@
+globs:
+  - "**/*.md"
+  - ".github/**/*.md"
+ignores:
+  - "**/node_modules/**"
+  - "**/dist/**"
+  - "**/build/**"
+  - "**/uploads/**"
+  - "**/backups/**"
+  - "**/.git/**"
+  - ".superpowers/**"
+config:
+  MD013:
+    line_length: 120
+    code_blocks: false
+    tables: false
+  MD029:
+    style: ordered
+fix: false

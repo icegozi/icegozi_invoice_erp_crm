@@ -1,0 +1,2 @@
+# Keep Markdown consistent across Windows and Linux checkouts.
+*.md text eol=lf
