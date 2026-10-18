@@ -1,20 +1,14 @@
-# Operations runbook
+# Vận hành Invoice ERP/CRM
 
-## Backups and restore
+Điểm vào cho người quản trị và đội vận hành.
 
-Schedule `MONGO_CONTAINER=invoice-mongo ./ops/backup-mongodb.sh /absolute/secure/backup/path` daily from a host cron job. Store backups off-host and periodically test restoration in a non-production environment:
+## Bắt đầu
 
-```bash
-gzip -dc invoice-YYYYMMDDTHHMMSSZ.archive.gz | docker exec -i invoice-mongo mongorestore --archive --drop
-```
+- [Quickstart local](../README.md#chạy-local-bằng-docker).
+- [Mục lục tài liệu và trạng thái SaaS](../docs/README.md).
+- [Compose](../docker-compose.yml): local với cổng và tên container cố định.
+- [Script sao lưu Bash](backup-mongodb.sh): tạo archive gzip; cần thư mục đích đã tồn tại.
 
-## Production deployment
-
-- Set a unique `JWT_SECRET`, `CORS_ORIGINS`, real `FRONTEND_URL`, and verified SMTP credentials.
-- Do not publish port 27017. Put frontend/API behind TLS termination and monitor `/health`.
-- Run the CI workflow before deployment. MongoDB is configured as a single-node replica set so financial writes use transactions.
-- Provision a separate staging stack with its own database, secrets, SMTP sandbox, and URLs.
-
-## Migrating to multiple organizations
-
-The schema now accepts `organizationId` and includes tenant-aware indexes, while existing records remain compatible without one. Before enabling more than one organization, create an organization for every existing account, backfill `organizationId` on its Admin, clients, documents, payments, settings, taxes and payment modes, then deploy request-level tenant scoping. Do not mix records with and without an organization in a shared production workspace.
+Không coi cấu hình local là cấu hình production.
+Không reset, restore hoặc xóa volumes của hệ thống đang sử dụng để thử hướng dẫn.
+Backup MongoDB chưa bao gồm uploads; phải bảo vệ và khôi phục cả hai thành phần.
