@@ -29,4 +29,5 @@ Xem [mục lục tài liệu](../docs/README.md) và [quickstart Docker](../READ
 - [Cấu hình Vite](vite.config.mjs).
 - [Cấu hình địa chỉ API](src/config/serverApiConfig.js).
 
-File này là điểm vào; thông tin kỹ thuật chi tiết được duy trì trong bộ docs chung.
+Xem [phát triển](../docs/technical/development.md) và [cấu hình](../docs/technical/configuration.md).
+Thông tin kỹ thuật chi tiết được duy trì trong bộ docs chung.

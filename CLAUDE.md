@@ -13,6 +13,9 @@ Tài liệu sản phẩm bắt đầu từ [README](README.md) và [mục lục 
 
 ## Điểm vào kỹ thuật
 
+Nguồn dùng chung: [kiến trúc](docs/technical/architecture.md), [phát triển](docs/technical/development.md),
+[API](docs/technical/api.md) và [cấu hình](docs/technical/configuration.md).
+
 - [Backend package](backend/package.json): CommonJS, alias `@` trỏ đến `src`.
 - [Frontend package](frontend/package.json): ESM, React/Vite; chưa có test script frontend.
 - [Backend tests](backend/test): `npm --prefix backend test`.
